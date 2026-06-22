@@ -16,7 +16,7 @@ jobs:
     outputs:
       bootstrapped: ${{ steps.check.outputs.bootstrapped }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - id: check
         run: |
           if [ -f service/backend/go.sum ]; then
@@ -34,8 +34,8 @@ jobs:
       run:
         working-directory: service/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: service/backend/go.mod
           cache-dependency-path: service/backend/go.sum
@@ -64,8 +64,8 @@ jobs:
       run:
         working-directory: service/frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
