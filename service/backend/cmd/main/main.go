@@ -41,7 +41,7 @@ import (
 // @Title						My Project API
 // @Version					0.1
 // @Description				My Project backend API.
-// @Contact.name				Sunkek
+// @Contact.name				My Project
 // @BasePath					/api/v1
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
@@ -53,7 +53,15 @@ func main() {
 	cfg.Fiber.ErrorHandler = func(ctx gf.Ctx, err error) error {
 		// Status mapping lives in e.HTTPStatus so the metrics middleware can label
 		// error responses with the same code the client receives.
-		return ctx.Status(e.HTTPStatus(err)).JSON(gf.Map{"error": err.Error()})
+		status := e.HTTPStatus(err)
+		// Never echo internal wrapped messages (e.g. "revoke token: redis
+		// connection refused") to clients. 5xx responses carry a generic
+		// message; 4xx messages are user-facing by construction.
+		msg := err.Error()
+		if status >= 500 {
+			msg = "internal server error"
+		}
+		return ctx.Status(status).JSON(gf.Map{"error": msg})
 	}
 	logger := slog.New(slog.NewJSONHandler(
 		os.Stderr,

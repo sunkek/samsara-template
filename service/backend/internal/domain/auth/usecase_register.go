@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/sunkek/mishap"
@@ -21,7 +22,7 @@ func (d *Domain) Register(ctx context.Context, in model.RegisterInput) (model.Us
 	if email == "" {
 		return model.User{}, mishap.New("email is required", e.Validation)
 	}
-	if len(in.Password) < minPasswordLen {
+	if utf8.RuneCountInString(in.Password) < minPasswordLen {
 		return model.User{}, mishap.New("password too short", e.Validation)
 	}
 

@@ -86,7 +86,9 @@ func (rl *rateLimiter) handle(c gf.Ctx) error {
 }
 
 // janitor periodically drops expired entries so the map does not grow without
-// bound under churning client keys.
+// bound under churning client keys. The limiter is a process-lifetime singleton
+// (built once in main), so this goroutine runs for the life of the process by
+// design — do not call RateLimit per-request.
 func (rl *rateLimiter) janitor() {
 	ticker := time.NewTicker(rl.window)
 	defer ticker.Stop()
