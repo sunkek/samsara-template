@@ -7,7 +7,7 @@ on:
 
 jobs:
   # Skip CI while the repo is still the unbootstrapped template. Presence of
-  # service/backend/go.sum is the signal: the template ships without it; the
+  # services/backend/go.sum is the signal: the template ships without it; the
   # adopter runs `go mod tidy` after bootstrap and commits the resulting sum.
   # Until then there is nothing meaningful to build, so the real jobs are gated
   # on this check.
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - id: check
         run: |
-          if [ -f service/backend/go.sum ]; then
+          if [ -f services/backend/go.sum ]; then
             echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
           else
             echo "Template not bootstrapped (no go.sum); skipping CI."
@@ -32,13 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: service/backend
+        working-directory: services/backend
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version-file: service/backend/go.mod
-          cache-dependency-path: service/backend/go.sum
+          go-version-file: services/backend/go.mod
+          cache-dependency-path: services/backend/go.sum
       - name: gofmt
         run: |
           unformatted="$(gofmt -l .)"
@@ -62,14 +62,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: service/frontend
+        working-directory: services/frontend
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: service/frontend/package-lock.json
+          cache-dependency-path: services/frontend/package-lock.json
       - name: install
         run: npm ci
       - name: lint

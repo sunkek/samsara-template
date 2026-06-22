@@ -12,16 +12,16 @@ Thanks for considering a contribution. This template aims to stay small, opinion
 
 1. `docker network create dev` (once)
 2. `make gen-env APP=<your-app-name>`
-3. `cd service/backend && go mod tidy`
-4. `cd service/frontend && npm install`
+3. `cd services/backend && go mod tidy`
+4. `cd services/frontend && npm install`
 5. `make run && make migrate-up && make run-local`
 
 See [`README.md`](README.md) for the Docker-only path (`make up`).
 
 ## Before you open a PR
 
-- `cd service/backend && gofmt -l . && go vet ./... && go test ./...` — all clean.
-- `cd service/frontend && npm run lint && npm run build` — all clean.
+- `cd services/backend && gofmt -l . && go vet ./... && go test ./...` — all clean.
+- `cd services/frontend && npm run lint && npm run build` — all clean.
 - If you touched API handlers, regenerate Swagger: `make gen-api-docs`.
 - If you added a migration, include it in the same commit as the Go code that needs it.
 - Update `CLAUDE.md` / `docs/ARCHITECTURE.md` if you changed the architecture or added a cross-cutting convention.

@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - id: check
         run: |
-          if [ -f service/backend/go.sum ]; then
+          if [ -f services/backend/go.sum ]; then
             echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
           else
             echo "Template not bootstrapped (no go.sum); skipping CodeQL."

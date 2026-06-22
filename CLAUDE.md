@@ -23,10 +23,10 @@ make up ENVIRONMENT=stage|prod   # full stack, built images (nginx-served fronte
 make stop             # stop and remove containers
 make logs             # follow compose logs
 
-cd service/backend && go mod tidy           # populate go.sum
-cd service/backend && go build ./cmd/main   # build binary
-cd service/backend && go test ./...         # run all tests
-cd service/backend && go run ./cmd/main -l  # run locally (loads env/local/api.env)
+cd services/backend && go mod tidy           # populate go.sum
+cd services/backend && go build ./cmd/main   # build binary
+cd services/backend && go test ./...         # run all tests
+cd services/backend && go run ./cmd/main -l  # run locally (loads env/local/api.env)
 
 make gen-api-docs     # regenerate Swagger (swag fmt + swag init)
 ```
@@ -50,7 +50,7 @@ make psql-admin             # psql as postgres superuser
 Uses `github.com/sunkek/samsara`, a component supervisor. PostgreSQL, RabbitMQ, Redis, and the Fiber HTTP server are each registered as components with a tier (`Critical`/`Significant`) and restart policy. Fiber declares its infra dependencies via `WithDependencies`; `main()` blocks on `<-ctx.Done()`.
 
 ### Domain layout
-Each domain lives in `service/backend/internal/domain/<name>/`:
+Each domain lives in `services/backend/internal/domain/<name>/`:
 
 ```
 domain.go        # Domain struct + constructor; wires use-cases into REST adapter
@@ -88,7 +88,7 @@ The defaults favor local-dev convenience. Before exposing the service publicly, 
 - **Correlated logging** — `internal/common/middleware.RequestID` assigns each request an `X-Request-ID` (honouring an inbound one), echoes it, and seeds a request-scoped `*slog.Logger` (bound to `request_id`) into the context via `internal/common/logging`. The auth middleware adds `user_id`. Handlers and domain code log with `logging.From(ctx)`, so every line for a request is correlated; off-request paths fall back to `slog.Default()`.
 
 ### Docker stack
-`deploy/docker-compose.yml` is the base (infra + app-service skeleton); per-environment overrides `docker-compose.{dev,stage,prod}.yml` add the build target, source mounts, ports, and healthchecks. `make up [ENVIRONMENT=…]` merges base + override (`-f base -f <env>`) and brings up the `app` profile. `dev` runs air + the vite dev server with source mounted (hot reload); `stage`/`prod` build images — backend from `Dockerfile.prod` (scratch + `/health`), frontend built and served by nginx, which proxies `/api` to the `backend` alias so the SPA stays same-origin on a relative `/api/v1` base. Container and volume names are suffixed with `$ENVIRONMENT`; services find each other via stable network aliases (`postgresql`/`rabbitmq`/`redis`/`backend`). `make run` starts infra only; `make run-local` is dev infra + host backend/frontend.
+`infra/docker-compose.yml` is the base (infra + app-service skeleton); per-environment overrides `docker-compose.{dev,stage,prod}.yml` add the build target, source mounts, ports, and healthchecks. `make up [ENVIRONMENT=…]` merges base + override (`-f base -f <env>`) and brings up the `app` profile. `dev` runs air + the vite dev server with source mounted (hot reload); `stage`/`prod` build images — backend from `Dockerfile.prod` (scratch + `/health`), frontend built and served by nginx, which proxies `/api` to the `backend` alias so the SPA stays same-origin on a relative `/api/v1` base. Container and volume names are suffixed with `$ENVIRONMENT`; services find each other via stable network aliases (`postgresql`/`rabbitmq`/`redis`/`backend`). `make run` starts infra only; `make run-local` is dev infra + host backend/frontend.
 
 ### Host port mappings
 Host-side ports for the dev/local infra (Postgres, RabbitMQ, Redis) live in `env/<env>/ports.env`. The Makefile sources that file before each `docker compose` call and before the local backend `air` launch, so changing one variable shifts both the published host port AND the port the backend connects to. Edit there to coexist with other projects already holding the defaults (`5432`/`5672`/`6379`/`15672`). Container-internal ports stay standard.
@@ -99,7 +99,7 @@ Host-side ports for the dev/local infra (Postgres, RabbitMQ, Redis) live in `env
 ## First-run checklist after cloning
 1. `docker network create dev`
 2. `make gen-env APP=my_project` (fills env/dev + env/local with shared secrets)
-3. `cd service/backend && go mod tidy`
-4. `cd service/frontend && npm install`
+3. `cd services/backend && go mod tidy`
+4. `cd services/frontend && npm install`
 5. `make migrate-up` (after infra is up)
 6. `make run-local`

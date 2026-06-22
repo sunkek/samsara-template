@@ -9,7 +9,7 @@ APP ?= my_project
 
 # Base compose + per-environment override, merged in order. ENVIRONMENT drives
 # which override (and which env/<env>/ dir + volume/container name suffix).
-COMPOSE_FILES := -f deploy/docker-compose.yml -f deploy/docker-compose.$(ENVIRONMENT).yml
+COMPOSE_FILES := -f infra/docker-compose.yml -f infra/docker-compose.$(ENVIRONMENT).yml
 # Shared external bridge created once via `docker network create dev`.
 NETWORK := dev
 # Postgres container for this environment (psql / migrate / dump targets).
@@ -17,8 +17,8 @@ PG_CONTAINER := my_project_postgresql_$(ENVIRONMENT)
 
 POSTGRES_ENV := $(ENV_DIR)/$(ENVIRONMENT)/postgresql.env
 PORTS_ENV := $(ENV_DIR)/$(ENVIRONMENT)/ports.env
-MIGRATIONS_DIR := ./deploy/postgresql/migration
-BACKUP_DIR := ./deploy/postgresql/backup
+MIGRATIONS_DIR := ./infra/postgresql/migration
+BACKUP_DIR := ./infra/postgresql/backup
 
 # Host-side port mappings live in $(PORTS_ENV). Source it before every docker
 # compose invocation so the file's variables drive port interpolation, and
@@ -130,7 +130,7 @@ gen-key-b64:
 	openssl rand --base64 32
 
 gen-api-docs:
-	cd ./service/backend && \
+	cd ./services/backend && \
 	swag fmt -d ./cmd/main && \
 	swag init -d ./cmd/main -o ./docs --parseInternal --parseDependency --parseDependencyLevel=1
 
@@ -138,7 +138,7 @@ gen-api-docs:
 
 # Full stack in Docker for the chosen ENVIRONMENT (dev = hot reload; stage/prod
 # = built images, nginx-served frontend). --build keeps images in sync with the
-# Dockerfiles. Backend needs go.sum committed (`cd service/backend && go mod
+# Dockerfiles. Backend needs go.sum committed (`cd services/backend && go mod
 # tidy` once). Env files must exist: `make gen-env GEN_ENVS="$(ENVIRONMENT)" APP=...`.
 up:
 	$(COMPOSE_WITH_PORTS) --profile app up -d --build
@@ -176,10 +176,10 @@ run-local:
 	[ -f "$(LOCAL_PORTS_ENV)" ] && . "$(LOCAL_PORTS_ENV)"; \
 	[ -f "$(LOCAL_API_ENV)" ] && . "$(LOCAL_API_ENV)"; \
 	set +a; \
-	docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d postgresql rabbitmq redis; \
+	docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d postgresql rabbitmq redis; \
 	trap 'kill 0' EXIT; \
-	(cd ./service/backend && air -c .air.toml) & \
-	(cd ./service/frontend && npm run dev); \
+	(cd ./services/backend && air -c .air.toml) & \
+	(cd ./services/frontend && npm run dev); \
 	wait
 
 stop:
@@ -206,7 +206,7 @@ psql-admin:
 	PGPASSWORD="$$POSTGRES_PASSWORD" docker exec -it $(PG_CONTAINER) \
 		psql -U "$$POSTGRES_USER" -d postgres
 
-# Run the integration-tagged tests (service/backend/internal/integration)
+# Run the integration-tagged tests (services/backend/internal/integration)
 # against the running dev infra. Bring infra up and apply migrations first:
 #   make run && make migrate-up && make test-integration
 # Builds INTEGRATION_DATABASE_URL from the env files; tests self-skip if it is
@@ -218,7 +218,7 @@ test-integration:
 	set +a; \
 	export INTEGRATION_DATABASE_URL="postgres://$$APP_USER:$$APP_PASSWORD@localhost:$$MY_PROJECT_PG_PORT/$$APP_DB?sslmode=disable"; \
 	echo "Running integration tests against localhost:$$MY_PROJECT_PG_PORT/$$APP_DB"; \
-	cd service/backend && go test -tags=integration ./internal/integration/...
+	cd services/backend && go test -tags=integration ./internal/integration/...
 
 pg-dump:
 	@set -euo pipefail; \
@@ -253,12 +253,12 @@ pg-restore:
 
 migrate-new:
 	@[ -n "$(n)" ] || (echo "Usage: make migrate-new n=<migration_name>" && exit 1)
-	docker run --rm -u $(USER_ID):$(GROUP_ID) -v "$(PWD)/deploy/postgresql/migration:/migration" \
+	docker run --rm -u $(USER_ID):$(GROUP_ID) -v "$(PWD)/infra/postgresql/migration:/migration" \
 		migrate/migrate create -ext sql -dir /migration -seq $(n)
 
 migrate-up:
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
-	docker run --rm -v "$(PWD)/deploy/postgresql/migration:/migration" --network "$(NETWORK)" \
+	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
 		migrate/migrate -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		up; \
@@ -268,7 +268,7 @@ migrate-up:
 
 migrate-down:
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
-	docker run --rm -v "$(PWD)/deploy/postgresql/migration:/migration" --network "$(NETWORK)" \
+	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
 		migrate/migrate -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		down 1
@@ -276,7 +276,7 @@ migrate-down:
 migrate-force:
 	@[ -n "$(v)" ] || (echo "Usage: make migrate-force v=<version>" && exit 1)
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
-	docker run --rm -v "$(PWD)/deploy/postgresql/migration:/migration" --network "$(NETWORK)" \
+	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
 		migrate/migrate -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		force $(v)

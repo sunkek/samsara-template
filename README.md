@@ -17,8 +17,8 @@ An opinionated full-stack reference service: a Go backend organized as ports & a
 ```bash
 docker network create dev                        # once
 make gen-env APP=my_project                     # fills env/dev + env/local (shared secrets)
-cd service/backend && go mod tidy && cd ../..
-cd service/frontend && npm install && cd ../..
+cd services/backend && go mod tidy && cd ../..
+cd services/frontend && npm install && cd ../..
 make run                                          # start infra
 make migrate-up                                   # apply migrations
 make run-local                                    # backend (live reload) + frontend on host
@@ -44,8 +44,8 @@ stage/prod separately for distinct secrets: `make gen-env GEN_ENVS=prod APP=…`
 ## Layout
 
 ```
-service/backend    # Go service (cmd/main, internal/domain, internal/common)
-service/frontend   # React + Vite SPA
+services/backend    # Go service (cmd/main, internal/domain, internal/common)
+services/frontend   # React + Vite SPA
 deploy             # docker-compose, postgres/rabbitmq/redis config, migrations
 env                # per-environment env files (example/ is the template)
 ```

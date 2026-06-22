@@ -3,12 +3,12 @@
 services:
   backend:
     build:
-      context: ../service/backend
+      context: ../services/backend
       dockerfile: .docker/Dockerfile.dev
     ports:
       - "127.0.0.1:${MY_PROJECT_BACKEND_PORT:-8000}:8000"
     volumes:
-      - ../service/backend:/app
+      - ../services/backend:/app
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3333/healthz"]
       interval: 10s
@@ -18,7 +18,7 @@ services:
 
   frontend:
     build:
-      context: ../service/frontend
+      context: ../services/frontend
       dockerfile: .docker/Dockerfile.dev
     environment:
       # vite dev server proxies /api to the backend container (see
@@ -27,7 +27,7 @@ services:
     ports:
       - "127.0.0.1:${MY_PROJECT_FRONTEND_PORT:-5173}:5173"
     volumes:
-      - ../service/frontend:/app
+      - ../services/frontend:/app
       # Anonymous volume keeps the image's node_modules from being hidden by
       # the source mount.
       - /app/node_modules

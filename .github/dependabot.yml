@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: gomod
-    directory: /service/backend
+    directory: /services/backend
     schedule:
       interval: weekly
     groups:
@@ -9,7 +9,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: npm
-    directory: /service/frontend
+    directory: /services/frontend
     schedule:
       interval: weekly
     groups:

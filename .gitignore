@@ -26,12 +26,12 @@ go.work.sum
 *.env
 !*.example.env
 !env/example/*.env
-deploy/rabbitmq/definitions.json
-deploy/redis/redis.conf
+infra/rabbitmq/definitions.json
+infra/redis/redis.conf
 .codex
 
 # Build outputs
-service/backend/main
+services/backend/main
 
 # Editor/IDE
 .idea/
