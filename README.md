@@ -1,3 +1,11 @@
+<!-- TEMPLATE-BANNER:START -->
+> **You are looking at `samsara-template`** — a runnable reference scaffold, not a product.
+> Clone it and bring the stack up to study a production-shaped Go service end to end, or run
+> `./bootstrap.sh` to fork-and-rename it into your own project. `bootstrap.sh` rewrites the
+> placeholder identity below (`My Project` / `my_project` / `MY_PROJECT`) to the names you
+> choose and removes this banner, leaving a clean README for the new project.
+<!-- TEMPLATE-BANNER:END -->
+
 # My Project
 
 An opinionated full-stack reference service: a Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. It runs as-is — clone it and bring up the stack to see a production-shaped Go service end to end (auth + a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks, Swagger docs). To start a fresh named project from it, run `./bootstrap.sh` to fork-and-rename.

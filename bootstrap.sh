@@ -6,7 +6,7 @@
 #   app title    My Project
 #   env prefix   MY_PROJECT          (env vars: MY_PROJECT_API_*)
 #   module path  github.com/sunkek/samsara-template/backend
-#   author       Sunkek
+#   author       Nikita Zotov
 #   author email security@example.com
 #
 # bootstrap.sh rewrites those concrete values to the names you choose, turning
@@ -32,7 +32,7 @@ OLD_APP_NAME="my_project"
 OLD_APP_TITLE="My Project"
 OLD_ENV_PREFIX="MY_PROJECT"
 OLD_MODULE_PATH="github.com/sunkek/samsara-template/backend"
-OLD_AUTHOR="Sunkek"
+OLD_AUTHOR="Nikita Zotov"
 OLD_AUTHOR_EMAIL="security@example.com"
 
 # --- Target identity: filled from flags / prompts. -----------------------------
@@ -152,9 +152,9 @@ sed_args=(
 # email are copyright/contact metadata — they live in LICENSE, SECURITY.md, and
 # other docs, never in code. Running them repo-wide is unsafe: the author slug
 # can be a substring of the NEW module path (e.g. gitlab.com/Sunkek/<app>), so a
-# blanket pass rewrites "Sunkek" inside the freshly-written module path and
-# produces an invalid go.mod ("gitlab.com/Nikita Zotov/<app>/backend"). Scoping
-# to docs sidesteps the collision entirely.
+# blanket pass rewrites the author name inside the freshly-written module path
+# and produces an invalid go.mod ("gitlab.com/Nikita Zotov/<app>/backend" — note
+# the space). Scoping to docs sidesteps the collision entirely.
 sed_author=(
   -e "s|$(esc_search "$OLD_AUTHOR_EMAIL")|$(esc_repl "$AUTHOR_EMAIL")|g"
   -e "s|$(esc_search "$OLD_AUTHOR")|$(esc_repl "$AUTHOR")|g"
@@ -181,6 +181,12 @@ find . -type f \
   -not -path '*/tmp/*' \
   \( -name '*.md' -o -name 'LICENSE' -o -name 'SECURITY.md' \) \
   -exec sed -i "${sed_author[@]}" {} +
+
+# Strip the template-only banner from README so the fork's README opens directly
+# on the (renamed) project, not on the "this is a scaffold" preamble.
+if [ -f README.md ]; then
+  sed -i '/<!-- TEMPLATE-BANNER:START -->/,/<!-- TEMPLATE-BANNER:END -->/d' README.md
+fi
 
 # Guard: a valid Go module path has no whitespace. If the rename produced one
 # (e.g. an author slug leaked into the module path), fail loud rather than ship
