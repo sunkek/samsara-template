@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Skip CI while the repo is still the unbootstrapped template. Presence of
+  # service/backend/go.sum is the signal: the template ships without it; the
+  # adopter runs `go mod tidy` after bootstrap and commits the resulting sum.
+  # Until then there is nothing meaningful to build, so the real jobs are gated
+  # on this check.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      bootstrapped: ${{ steps.check.outputs.bootstrapped }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f service/backend/go.sum ]; then
+            echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Template not bootstrapped (no go.sum); skipping CI."
+            echo "bootstrapped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  backend:
+    needs: gate
+    if: needs.gate.outputs.bootstrapped == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: service/backend/go.mod
+          cache-dependency-path: service/backend/go.sum
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"; echo "$unformatted"; exit 1
+          fi
+      - name: go vet
+        run: go vet ./...
+      - name: build
+        run: go build ./cmd/main
+      - name: test
+        run: go test ./...
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  frontend:
+    needs: gate
+    if: needs.gate.outputs.bootstrapped == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: service/frontend/package-lock.json
+      - name: install
+        run: npm ci
+      - name: lint
+        run: npm run lint
+      - name: build
+        run: npm run build
