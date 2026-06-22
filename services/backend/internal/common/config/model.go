@@ -135,6 +135,18 @@ type Redis struct {
 	ReadTimeout    time.Duration `envconfig:"READ_TIMEOUT"`
 	WriteTimeout   time.Duration `envconfig:"WRITE_TIMEOUT"`
 	PoolSize       int           `envconfig:"POOL_SIZE"`
+
+	// TLS knobs (samsara-components/redis v0.2+). Disabled by default — safe on a
+	// trusted internal network; enable when Redis is reached over an untrusted
+	// link (mirrors the Postgres SSL_MODE hardening). Field order must match
+	// redis.Config for the struct conversion in cmd/main.
+	TLS                   bool   `envconfig:"TLS" default:"false"`
+	TLSCAFile             string `envconfig:"TLS_CA_FILE"`
+	TLSCertFile           string `envconfig:"TLS_CERT_FILE"`
+	TLSKeyFile            string `envconfig:"TLS_KEY_FILE"`
+	TLSServerName         string `envconfig:"TLS_SERVER_NAME"`
+	TLSInsecureSkipVerify bool   `envconfig:"TLS_INSECURE_SKIP_VERIFY" default:"false"`
+	TLSMinVersion         string `envconfig:"TLS_MIN_VERSION"`
 }
 
 // S3 is optional object-storage config. No S3 component is registered in
