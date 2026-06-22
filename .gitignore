@@ -1,0 +1,41 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Secrets — ignore real env files, but keep the committed templates in env/example/
+.env
+*.env
+!*.example.env
+!env/example/*.env
+deploy/rabbitmq/definitions.json
+deploy/redis/redis.conf
+.codex
+
+# Build outputs
+service/backend/main
+
+# Editor/IDE
+.idea/
+.vscode/
+tmp/
+node_modules/
+dist/

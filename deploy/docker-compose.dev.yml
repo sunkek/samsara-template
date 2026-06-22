@@ -1,0 +1,33 @@
+# Dev override: hot reload. Backend runs air, frontend runs the vite dev
+# server, both with source mounted. Merged on top of docker-compose.yml.
+services:
+  backend:
+    build:
+      context: ../service/backend
+      dockerfile: .docker/Dockerfile.dev
+    ports:
+      - "127.0.0.1:${MY_PROJECT_BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ../service/backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3333/healthz"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ../service/frontend
+      dockerfile: .docker/Dockerfile.dev
+    environment:
+      # vite dev server proxies /api to the backend container (see
+      # vite.config.ts); the SPA itself uses the relative /api/v1 base.
+      MY_PROJECT_API_PROXY_TARGET: "http://backend:8000"
+    ports:
+      - "127.0.0.1:${MY_PROJECT_FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ../service/frontend:/app
+      # Anonymous volume keeps the image's node_modules from being hidden by
+      # the source mount.
+      - /app/node_modules

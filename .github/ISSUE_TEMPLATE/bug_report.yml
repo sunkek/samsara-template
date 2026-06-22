@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in the template is broken or behaves wrong.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, what actually happened.
+      placeholder: |
+        Ran `make run-local`, expected backend on :8000, got "connection refused".
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Minimal steps from a fresh clone.
+      placeholder: |
+        1. git clone …
+        2. ./bootstrap.sh -n myapp -m github.com/me/myapp/backend -a "Me"
+        3. make run-local
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Output from `make logs`, the failing command, or CI job.
+      render: shell
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Docker version, Go version, Node version.
+      placeholder: "Ubuntu 24.04, Docker 27.3, Go 1.26.1, Node 22.9"
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Template commit / version
+      placeholder: "git rev-parse HEAD"

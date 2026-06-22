@@ -1,0 +1,25 @@
+{
+  "vhosts": [
+    { "name": "${APP_VHOST}" }
+  ],
+  "users": [
+    { "name": "${ADMIN_USER}", "password": "${ADMIN_PASS}", "tags": ["administrator"]},
+    { "name": "${APP_USER}", "password": "${APP_PASS}", "tags": [] }
+  ],
+  "permissions": [
+    {
+      "user": "${ADMIN_USER}",
+      "vhost": "${APP_VHOST}",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "${APP_USER}",
+      "vhost": "${APP_VHOST}",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ]
+}

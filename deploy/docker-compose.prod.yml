@@ -1,0 +1,29 @@
+# Prod override: built images, no source mounts. Backend is the scratch binary
+# (Dockerfile.prod); frontend is the vite build served by nginx, which proxies
+# /api to the backend (same origin). Only the frontend is published; the
+# backend is reachable only inside the network. Merged on docker-compose.yml.
+services:
+  backend:
+    build:
+      context: ../service/backend
+      dockerfile: .docker/Dockerfile.prod
+    healthcheck:
+      # Scratch image has no shell/curl; the prod build ships a /health binary.
+      test: ["CMD", "/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ../service/frontend
+      dockerfile: .docker/Dockerfile.prod
+    ports:
+      - "${MY_PROJECT_FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s

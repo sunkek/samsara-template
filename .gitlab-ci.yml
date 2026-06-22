@@ -1,0 +1,52 @@
+# GitLab CI mirror of .github/workflows/ci.yml. Keep the two in sync.
+#
+# Both jobs short-circuit while the repo is still the unbootstrapped template.
+# Presence of service/backend/go.sum is the signal: the template ships without
+# it; the adopter runs `go mod tidy` after bootstrap and commits the resulting
+# sum. Until then the guard exits 0 so pipelines stay green.
+
+stages:
+  - test
+
+.template-guard: &template-guard
+  - |
+    if [ ! -f service/backend/go.sum ]; then
+      echo "Template not bootstrapped (no go.sum); skipping CI."
+      exit 0
+    fi
+
+backend:
+  stage: test
+  image: golang:1.26.1
+  cache:
+    key:
+      files:
+        - service/backend/go.sum
+    paths:
+      - .go-cache/
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go-cache
+  script:
+    - *template-guard
+    - cd service/backend
+    - |
+      unformatted="$(gofmt -l .)"
+      if [ -n "$unformatted" ]; then
+        echo "These files are not gofmt-clean:"; echo "$unformatted"; exit 1
+      fi
+    - go vet ./...
+    - go build ./cmd/main
+    - go test ./...
+
+frontend:
+  stage: test
+  image: node:22
+  # Uses `npm install` (not `npm ci`) so CI works before a lockfile is
+  # committed. Once you commit package-lock.json, switch to `npm ci` and cache
+  # node_modules keyed on the lockfile for faster, reproducible installs.
+  script:
+    - *template-guard
+    - cd service/frontend
+    - npm install
+    - npm run lint
+    - npm run build

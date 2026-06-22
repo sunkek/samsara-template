@@ -1,0 +1,180 @@
+# Base stack: infra (always) + app services (behind the "app" profile).
+# Per-environment specifics — build target, source mounts, published ports,
+# healthchecks — live in docker-compose.<env>.yml overrides, merged via
+#   docker compose -f docker-compose.yml -f docker-compose.$ENVIRONMENT.yml ...
+# (see `make up`). Container and volume names are scoped by $ENVIRONMENT so
+# multiple environments don't collide; services reach each other by the stable
+# network aliases (postgresql / rabbitmq / redis / backend), which also match
+# the backend's config defaults.
+networks:
+  dev:
+    external: true
+
+volumes:
+  postgresql_data:
+    name: my_project_postgresql_data_${ENVIRONMENT:-dev}
+  rabbitmq_data:
+    name: my_project_rabbitmq_data_${ENVIRONMENT:-dev}
+  redis_data:
+    name: my_project_redis_data_${ENVIRONMENT:-dev}
+
+services:
+  postgresql:
+    image: postgres:18
+    container_name: my_project_postgresql_${ENVIRONMENT:-dev}
+    restart: unless-stopped
+    expose:
+      - 5432
+    ports:
+      - "127.0.0.1:${MY_PROJECT_PG_PORT:-5432}:5432"
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/postgresql.env
+    networks:
+      dev:
+        aliases:
+          - postgresql
+    volumes:
+      - postgresql_data:/var/lib/postgresql
+      - ./postgresql/init/01-create-app-user-db.sh:/docker-entrypoint-initdb.d/01-create-app-user-db.sh:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "$$POSTGRES_DB", "-U", "$$POSTGRES_USER"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+    labels:
+      - traefik.enable=false
+
+  rabbitmq_init:
+    image: dibi/envsubst:1
+    container_name: my_project_rabbitmq_init_${ENVIRONMENT:-dev}
+    volumes:
+      - ./rabbitmq/init_entrypoint.sh:/entrypoint.sh:x
+      - ./rabbitmq/:/rabbitmq/
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/rabbitmq.env
+    networks:
+      - dev
+    entrypoint: ["sh", "/entrypoint.sh"]
+    labels:
+      - traefik.enable=false
+
+  rabbitmq:
+    image: rabbitmq:4.2-management
+    container_name: my_project_rabbitmq_${ENVIRONMENT:-dev}
+    restart: unless-stopped
+    depends_on:
+      rabbitmq_init:
+        condition: service_completed_successfully
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/rabbitmq.env
+    networks:
+      dev:
+        aliases:
+          - rabbitmq
+    expose:
+      - 5672
+      - 15672
+    ports:
+      - "127.0.0.1:${MY_PROJECT_RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${MY_PROJECT_RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+    labels:
+      - traefik.enable=false
+
+  redis_init:
+    image: dibi/envsubst:1
+    container_name: my_project_redis_init_${ENVIRONMENT:-dev}
+    volumes:
+      - ./redis/init_entrypoint.sh:/entrypoint.sh:x
+      - ./redis/:/redis/
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/redis.env
+    networks:
+      - dev
+    entrypoint: ["sh", "/entrypoint.sh"]
+    labels:
+      - traefik.enable=false
+
+  redis:
+    image: redis:8
+    container_name: my_project_redis_${ENVIRONMENT:-dev}
+    restart: unless-stopped
+    expose:
+      - 6379
+    ports:
+      - "127.0.0.1:${MY_PROJECT_REDIS_PORT:-6379}:6379"
+    depends_on:
+      redis_init:
+        condition: service_completed_successfully
+    networks:
+      dev:
+        aliases:
+          - redis
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/redis.env
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "set", "ping", "0"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+    labels:
+      - traefik.enable=false
+
+  # App services: common wiring here, env-specific build/ports/mounts in the
+  # override. Behind the "app" profile so `make run` / `make run-local` (no
+  # profile) start only infra; `make up` passes --profile app.
+  backend:
+    profiles: ["app"]
+    container_name: my_project_backend_${ENVIRONMENT:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      dev:
+        aliases:
+          - backend
+    env_file:
+      - ../env/${ENVIRONMENT:-dev}/api.env
+    environment:
+      # api.env points at localhost (host runs); in-network the backend reaches
+      # each dependency by its stable alias on the standard internal port.
+      MY_PROJECT_API_FIBER_HOST: "0.0.0.0"
+      MY_PROJECT_API_POSTGRESQL_HOST: postgresql
+      MY_PROJECT_API_RABBITMQ_HOST: rabbitmq
+      MY_PROJECT_API_REDIS_HOST: redis
+    expose:
+      - 8000
+    labels:
+      - traefik.enable=false
+
+  frontend:
+    profiles: ["app"]
+    container_name: my_project_frontend_${ENVIRONMENT:-dev}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - dev
+    labels:
+      - traefik.enable=false

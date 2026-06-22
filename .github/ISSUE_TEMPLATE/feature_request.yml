@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a change to the template.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening, check the **Scope of changes welcome** section in
+        `CONTRIBUTING.md`. This template aims to stay small and opinionated;
+        feature requests that grow its surface area are unlikely to land.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard, missing, or surprising today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should the template do instead? Concrete API/file/command sketches help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Why not solve this in the adopter's own repo after bootstrap?

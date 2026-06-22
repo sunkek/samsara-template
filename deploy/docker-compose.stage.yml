@@ -1,0 +1,28 @@
+# Stage override: same shape as prod (built images, nginx-served frontend), but
+# driven by env/stage/*. Diverge from prod here as your staging needs grow
+# (resource limits, replicas, different published port, etc.). Merged on
+# docker-compose.yml.
+services:
+  backend:
+    build:
+      context: ../service/backend
+      dockerfile: .docker/Dockerfile.prod
+    healthcheck:
+      test: ["CMD", "/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ../service/frontend
+      dockerfile: .docker/Dockerfile.prod
+    ports:
+      - "${MY_PROJECT_FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
