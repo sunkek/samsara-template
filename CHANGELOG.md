@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot config (`gomod`, `npm`, `github-actions`, weekly, grouped).
 - CodeQL workflow (Go + JS/TS, gated on bootstrap).
 - `govulncheck` step in backend CI.
-- Committed `service/frontend/package-lock.json` for reproducible installs.
+- Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Changed
 - Frontend CI now uses `npm ci` with npm cache (was `npm install`).

@@ -46,8 +46,8 @@ stage/prod separately for distinct secrets: `make gen-env GEN_ENVS=prod APP=…`
 ```
 services/backend    # Go service (cmd/main, internal/domain, internal/common)
 services/frontend   # React + Vite SPA
-deploy             # docker-compose, postgres/rabbitmq/redis config, migrations
-env                # per-environment env files (example/ is the template)
+infra               # docker-compose, postgres/rabbitmq/redis config, migrations
+env                 # per-environment env files (example/ is the template)
 ```
 
 See `CLAUDE.md` for commands and architecture, `AGENTS.md` for coding/commit
