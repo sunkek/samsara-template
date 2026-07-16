@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  # govet, staticcheck and errcheck are part of the default set; enable the
+  # extras the project cares about on top.
+  enable:
+    - misspell
+  settings:
+    misspell:
+      locale: US
+  exclusions:
+    generated: lax
+    paths:
+      - docs # swag-generated Swagger artifacts
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+  exclusions:
+    paths:
+      - docs
