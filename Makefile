@@ -27,7 +27,8 @@ BACKUP_DIR := ./infra/postgresql/backup
 COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] && . "$(PORTS_ENV)"; set +a; docker compose $(COMPOSE_FILES)
 
 .PHONY: help gen-env gen-key-hex gen-key-b64 gen-api-docs \
-	up down down-v restart restart-v run run-local stop logs ps pull \
+	up down down-v restart restart-v restart-local restart-local-v \
+	run run-local stop logs ps pull \
 	psql psql-admin test-integration \
 	migrate-new migrate-up migrate-down migrate-force \
 	pg-dump pg-restore
@@ -154,8 +155,8 @@ restart:
 restart-v:
 	$(MAKE) down-v up
 
-restart-local-:
-	$(MAKE) down-v run-local
+restart-local:
+	$(MAKE) down run-local
 
 restart-local-v:
 	$(MAKE) down-v run-local
