@@ -11,7 +11,7 @@ My Project is a backend + frontend application scaffold. The backend is a Go ser
 ### Local development
 ```bash
 docker network create dev                        # once, creates the shared bridge network
-make gen-env APP=my_project                     # first-time env setup: fills env/dev + env/local with shared secrets
+make gen-env APP=<your_app_name>                 # first-time env setup: fills env/dev + env/local with shared secrets (bootstrap.sh sets the name)
 make run-local                                    # infra containers + backend live reload + frontend
 ```
 
@@ -97,9 +97,10 @@ Host-side ports for the dev/local infra (Postgres, RabbitMQ, Redis) live in `env
 `github.com/sunkek/mishap`. Error codes in `internal/common/e/e.go`: `NotFound`, `Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`. Wrap with `mishap.Wrap(err, "message")`. The Fiber error handler in `cmd/main/main.go` maps these codes to HTTP statuses.
 
 ## First-run checklist after cloning
-1. `docker network create dev`
-2. `make gen-env APP=my_project` (fills env/dev + env/local with shared secrets)
-3. `cd services/backend && go mod tidy`
-4. `cd services/frontend && npm install`
-5. `make migrate-up` (after infra is up)
-6. `make run-local`
+1. Install host tools for live reload: `go install github.com/air-verse/air@latest` and `go install github.com/swaggo/swag/v2/cmd/swag@latest` (needed by `make run-local` / `.air.toml` pre_cmd)
+2. `docker network create dev`
+3. `make gen-env APP=<your_app_name>` (fills env/dev + env/local with shared secrets; bootstrap.sh sets the project name)
+4. `cd services/backend && go mod tidy`
+5. `cd services/frontend && npm install`
+6. `make migrate-up` (after infra is up)
+7. `make run-local`

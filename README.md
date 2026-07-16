@@ -14,9 +14,18 @@ An opinionated full-stack reference service: a Go backend organized as ports & a
 
 ## Quick start
 
+`make run-local` runs the backend with [air](https://github.com/air-verse/air)
+(live reload), which regenerates Swagger docs with
+[swag](https://github.com/swaggo/swag) on each build — install both once:
+
+```bash
+go install github.com/air-verse/air@latest
+go install github.com/swaggo/swag/v2/cmd/swag@latest
+```
+
 ```bash
 docker network create dev                        # once
-make gen-env APP=my_project                     # fills env/dev + env/local (shared secrets)
+make gen-env APP=<your_app_name>                # fills env/dev + env/local (shared secrets)
 cd services/backend && go mod tidy && cd ../..
 cd services/frontend && npm install && cd ../..
 make run                                          # start infra
