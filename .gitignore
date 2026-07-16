@@ -33,6 +33,11 @@ infra/redis/redis.conf
 # Build outputs
 services/backend/main
 
+# The template ships without go.sum — its absence is the CI "unbootstrapped"
+# gate signal (see .github/workflows/ci.yml / .gitlab-ci.yml). bootstrap.sh
+# removes this ignore so the fork can run `go mod tidy` and commit the sum.
+services/backend/go.sum
+
 # Editor/IDE
 .idea/
 .vscode/

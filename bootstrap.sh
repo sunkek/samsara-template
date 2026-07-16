@@ -197,6 +197,11 @@ if grep -qE '^module[[:space:]]+[^[:space:]]+[[:space:]]+[^[:space:]]' services/
   exit 1
 fi
 
+# The template gitignores services/backend/go.sum (its absence gates CI while
+# the repo is still the unbootstrapped template). The fork must commit go.sum,
+# so drop that ignore block here.
+sed -i '/^# The template ships without go\.sum/,/^services\/backend\/go\.sum$/d' "$TARGET/.gitignore"
+
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
 if [ -n "$VERIFY" ]; then
   echo "Verifying build (go build ./...) ..."
