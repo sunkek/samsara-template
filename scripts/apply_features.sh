@@ -62,7 +62,9 @@ prune frontend \
   services/frontend
 
 prune backend \
-  services/backend
+  services/backend \
+  env/example/api.env \
+  docs
 
 prune postgresql \
   services/backend/internal/domain/note \

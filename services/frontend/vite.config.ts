@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+// feat:if backend
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -27,9 +28,11 @@ const backendPort =
 // container when the frontend itself runs in Docker (PROXY_TARGET is set).
 const proxyTarget =
   process.env.MY_PROJECT_API_PROXY_TARGET ?? `http://localhost:${backendPort}`
+// feat:end
 
 export default defineConfig({
   plugins: [react()],
+// feat:if backend
   server: {
     proxy: {
       '/api': { target: proxyTarget, changeOrigin: true },
@@ -38,4 +41,5 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_API_BASE': JSON.stringify('/api/v1'),
   },
+// feat:end
 })

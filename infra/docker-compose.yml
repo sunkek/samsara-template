@@ -26,7 +26,12 @@ volumes:
   # feat:end
 # feat:end
 
+# feat:if postgresql|redis|rabbitmq|backend|frontend
 services:
+# feat:else
+#~ # An empty stack is still a valid compose file only with an explicit mapping.
+#~ services: {}
+# feat:end
   # feat:if postgresql
   postgresql:
     image: postgres:18

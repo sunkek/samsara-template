@@ -30,14 +30,19 @@ BACKUP_DIR := ./infra/postgresql/backup
 # container/volume name suffixes.
 COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] && . "$(PORTS_ENV)"; set +a; docker compose $(COMPOSE_FILES)
 
-# .PHONY lists every target the template can ship; entries whose target was
-# removed by a feature selection are simply inert.
-.PHONY: help gen-env gen-key-hex gen-key-b64 gen-api-docs \
+.PHONY: help gen-env gen-key-hex gen-key-b64 \
 	up down down-v restart restart-v restart-local restart-local-v \
-	run run-local stop logs ps pull \
-	psql psql-admin test-integration \
-	migrate-new migrate-up migrate-down migrate-force \
+	run run-local stop logs ps pull
+# feat:if backend
+.PHONY: gen-api-docs
+# feat:end
+# feat:if postgresql
+.PHONY: psql psql-admin migrate-new migrate-up migrate-down migrate-force \
 	pg-dump pg-restore
+# feat:end
+# feat:if backend,postgresql
+.PHONY: test-integration
+# feat:end
 
 help:
 	@echo "Targets:"
@@ -46,10 +51,23 @@ help:
 	@echo "  make down-v                   - Stop and remove all containers and volumes"
 	@echo "  make restart                  - down then up"
 	@echo "  make restart-v                - down-v then up"
+# feat:if postgresql|redis|rabbitmq
 	@echo "  make run                      - Start infra only (docker compose up -d)"
+# feat:end
+# feat:if backend,frontend
 	@echo "  make run-local                - Start dev infra; run backend (air) + frontend (vite) on host"
+# feat:end
+# feat:if backend,!frontend
+#~ 	@echo "  make run-local                - Start dev infra; run backend (air) on host"
+# feat:end
+# feat:if frontend,!backend
+#~ 	@echo "  make run-local                - Run the frontend dev server (vite) on host"
+# feat:end
 	@echo "  make stop                     - Stop and remove containers"
 	@echo "  make logs                     - Follow compose logs"
+# feat:if backend
+	@echo "  make gen-api-docs             - Regenerate Swagger docs (swag fmt + swag init)"
+# feat:end
 # feat:if postgresql
 	@echo "  make psql                     - Open psql as APP_USER"
 	@echo "  make psql-admin               - Open psql as POSTGRES_USER"
@@ -57,7 +75,9 @@ help:
 	@echo "  make migrate-up               - Apply all up migrations"
 	@echo "  make migrate-down             - Roll back one migration"
 	@echo "  make migrate-force v=<num>    - Force migration version"
+# feat:if backend
 	@echo "  make test-integration         - Run tagged integration tests against dev infra"
+# feat:end
 	@echo "  make pg-dump [DUMP_FILE=...]  - Dump APP_DB to SQL file"
 	@echo "  make pg-restore DUMP_FILE=... - Restore APP_DB from SQL file"
 # feat:end
@@ -65,15 +85,19 @@ help:
 # Generators
 
 # Environments materialized in one gen-env run. They SHARE a single secret
-# pool, so the host backend authenticates against the dockerized infra whether
-# it loads env/local (run-local) or env/dev — these two intentionally hold the
-# same credentials. Generate stage/prod in SEPARATE invocations so they each
-# get distinct secrets (never share a prod secret with dev):
+# pool, so dev and local intentionally hold the same credentials. Generate
+# stage/prod in SEPARATE invocations so they each get distinct secrets (never
+# share a prod secret with dev):
 #   make gen-env GEN_ENVS=prod APP=my_project
 GEN_ENVS ?= dev local
 
 # gen-env materializes env/<env>/*.env from env/example/*.env, replacing the
-# "password" placeholders with random secrets and "app" with $(APP).
+# "password" placeholders with random secrets and "app" with $(APP). The recipe
+# is ONE backslash-continued shell line, so feature markers cannot go inside it
+# (the shell would join the marker comment onto the previous line and comment
+# out the rest). The unused secrets in the pool are harmless: secret_for() only
+# reaches a branch when the matching env file is present.
+# feat:if postgresql|redis|rabbitmq
 #
 # Two consistency rules, both critical — get either wrong and the backend fails
 # to authenticate against its own infra (SQLSTATE 28P01 etc.):
@@ -83,6 +107,7 @@ GEN_ENVS ?= dev local
 #   2. run-local brings infra up from env/dev but loads the backend from
 #      env/local, so the secret pool is generated ONCE and shared across every
 #      environment in GEN_ENVS — dev and local get identical credentials.
+# feat:end
 gen-env:
 	@set -e; \
 	src_dir="$(ENV_DIR)/example"; \
@@ -150,8 +175,11 @@ gen-api-docs:
 
 # Full stack in Docker for the chosen ENVIRONMENT (dev = hot reload; stage/prod
 # = built images, nginx-served frontend). --build keeps images in sync with the
-# Dockerfiles. Backend needs go.sum committed (`cd services/backend && go mod
-# tidy` once). Env files must exist: `make gen-env GEN_ENVS="$(ENVIRONMENT)" APP=...`.
+# Dockerfiles.
+# feat:if backend
+# Backend needs go.sum committed (`cd services/backend && go mod tidy` once).
+# feat:end
+# Env files must exist: `make gen-env GEN_ENVS="$(ENVIRONMENT)" APP=...`.
 up:
 	$(COMPOSE_WITH_PORTS) --profile app up -d --build
 
@@ -175,10 +203,12 @@ restart-local-v:
 run:
 	$(COMPOSE_WITH_PORTS) up -d
 
-# run-local is always the dev environment: dev infra in Docker, backend (air)
-# and frontend (vite) on the host. It sources env/local/* directly — the
-# backend's air launch reads env/local/api.env via -l, so the vite proxy and
+# run-local is always the dev environment: infra in Docker, the app services on
+# the host. It sources env/local/* directly.
+# feat:if backend,frontend
+# The backend's air launch reads env/local/api.env via -l, so the vite proxy and
 # the compose host-port mapping must agree with that same file.
+# feat:end
 # Infra containers run-local brings up, and the host processes it launches.
 # Both are feature-dependent; `true;` keeps the joined recipe line valid when a
 # half is not selected.
