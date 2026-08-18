@@ -10,13 +10,23 @@
 #   author email security@example.com
 #
 # bootstrap.sh rewrites those concrete values to the names you choose, turning
-# the reference into your own project. It does NOT add or remove features.
+# the reference into your own project. It also cuts the fork down to the
+# features you pick (-F), via scripts/apply_features.sh.
 #
 # Usage:
 #   ./bootstrap.sh -d ../myapp -n myapp -m github.com/me/myapp/backend   # fork into a new dir (recommended)
+#   ./bootstrap.sh -d ../api -F backend,postgresql                       # backend + Postgres only
 #   ./bootstrap.sh                                                       # interactive, convert in place
 #
 # Flags:
+#   -F   comma-separated feature list to keep. Choose from:
+#          backend frontend postgresql redis rabbitmq
+#        Default: all of them. Everything not listed is deleted from the fork —
+#        adapters, compose services, env vars, migrations and docs alike.
+#        Dropping postgresql drops the sample domains with it (they are all
+#        Postgres-backed), leaving a bare supervisor + HTTP skeleton; dropping
+#        redis swaps auth's token denylist for the in-memory one; dropping
+#        rabbitmq removes the notestats read model and the note events.
 #   -f   force: proceed even if the destination dir already exists and is non-empty
 #   -V   verify: after rename, run `go build ./...` in the fork to confirm it compiles
 #
@@ -37,9 +47,10 @@ OLD_AUTHOR_EMAIL="security@example.com"
 
 # --- Target identity: filled from flags / prompts. -----------------------------
 APP_NAME="" APP_TITLE="" ENV_PREFIX="" MODULE_PATH="" AUTHOR="" AUTHOR_EMAIL="" DEST=""
-FORCE="" VERIFY=""
+FORCE="" VERIFY="" FEATURES=""
+ALL_FEATURES="backend,frontend,postgresql,redis,rabbitmq"
 
-while getopts "n:t:e:m:a:E:d:fVh" opt; do
+while getopts "n:t:e:m:a:E:d:F:fVh" opt; do
   case "$opt" in
     n) APP_NAME="$OPTARG" ;;
     t) APP_TITLE="$OPTARG" ;;
@@ -48,6 +59,7 @@ while getopts "n:t:e:m:a:E:d:fVh" opt; do
     a) AUTHOR="$OPTARG" ;;
     E) AUTHOR_EMAIL="$OPTARG" ;;
     d) DEST="$OPTARG" ;;
+    F) FEATURES="$OPTARG" ;;
     f) FORCE=1 ;;
     V) VERIFY=1 ;;
     h) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -71,6 +83,15 @@ ask MODULE_PATH  "New Go module path" "example.com/${APP_NAME}/backend"
 ask AUTHOR       "Author / copyright holder" "Your Name"
 ask AUTHOR_EMAIL "Security / contact email" "you@example.com"
 ask DEST         "Destination dir ('.' = rename in place)" "."
+ask FEATURES     "Features to keep ($ALL_FEATURES)" "$ALL_FEATURES"
+
+# Reject typos now rather than silently shipping a fork missing a feature.
+for feat in ${FEATURES//,/ }; do
+  case ",$ALL_FEATURES," in
+    *",$feat,"*) ;;
+    *) echo "Unknown feature: $feat (choose from $ALL_FEATURES)" >&2; exit 1 ;;
+  esac
+done
 
 echo
 echo "  $OLD_APP_NAME    -> $APP_NAME"
@@ -79,6 +100,7 @@ echo "  $OLD_ENV_PREFIX  -> $ENV_PREFIX"
 echo "  $OLD_MODULE_PATH -> $MODULE_PATH"
 echo "  $OLD_AUTHOR      -> $AUTHOR"
 echo "  $OLD_AUTHOR_EMAIL -> $AUTHOR_EMAIL"
+echo "  features = $FEATURES"
 echo "  DEST = $DEST"
 echo
 read -r -p "Apply rename? [y/N] " ok
@@ -202,8 +224,16 @@ fi
 # so drop that ignore block here.
 sed -i '/^# The template ships without go\.sum/,/^services\/backend\/go\.sum$/d' "$TARGET/.gitignore"
 
+# Cut the fork down to the chosen features, then drop the feature tooling: it is
+# a template-maintenance tool, and after this pass there are no markers left for
+# it to act on.
+if [ "$FEATURES" != "$ALL_FEATURES" ] || [ -f scripts/apply_features.sh ]; then
+  scripts/apply_features.sh -f "$FEATURES" -C .
+fi
+rm -f scripts/apply_features.sh scripts/features.awk scripts/features_test.sh
+
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
-if [ -n "$VERIFY" ]; then
+if [ -n "$VERIFY" ] && [ -d "$TARGET/services/backend" ]; then
   echo "Verifying build (go build ./...) ..."
   if command -v go >/dev/null 2>&1; then
     ( cd "$TARGET/services/backend" && go mod tidy && go build ./... ) \
@@ -223,7 +253,7 @@ esac
 
 echo "Done. Next:"
 [ "$TARGET" = "$ROOT" ] || echo "  cd $TARGET"
-echo "  cd services/backend && go mod tidy"
-echo "  cd services/frontend && npm install"
+[ -d "$TARGET/services/backend" ]  && echo "  cd services/backend && go mod tidy"
+[ -d "$TARGET/services/frontend" ] && echo "  cd services/frontend && npm install"
 echo "  docker network create dev   # if not already"
 echo "  make gen-env APP=$APP_NAME   # fills env/dev + env/local"

@@ -11,17 +11,28 @@ type Config struct {
 	Health Health `envconfig:"HEALTH"`
 	Log    Log    `envconfig:"LOG"`
 
-	Fiber      Fiber      `envconfig:"FIBER"`
+	Fiber Fiber `envconfig:"FIBER"`
+	// feat:if postgresql
 	PostgreSQL PostgreSQL `envconfig:"POSTGRESQL"`
-	RabbitMQ   RabbitMQ   `envconfig:"RABBITMQ"`
-	Redis      Redis      `envconfig:"REDIS"`
-	S3         S3         `envconfig:"S3"`
-	JWT        JWT        `envconfig:"JWT"`
-	Auth       Auth       `envconfig:"AUTH"`
-	Note       Note       `envconfig:"NOTE"`
-	Events     Events     `envconfig:"EVENTS"`
+	// feat:end
+	// feat:if rabbitmq
+	RabbitMQ RabbitMQ `envconfig:"RABBITMQ"`
+	// feat:end
+	// feat:if redis
+	Redis Redis `envconfig:"REDIS"`
+	// feat:end
+	S3 S3 `envconfig:"S3"`
+	// feat:if postgresql
+	JWT  JWT  `envconfig:"JWT"`
+	Auth Auth `envconfig:"AUTH"`
+	Note Note `envconfig:"NOTE"`
+	// feat:end
+	// feat:if rabbitmq
+	Events Events `envconfig:"EVENTS"`
+	// feat:end
 }
 
+// feat:if rabbitmq
 // Events configures the RabbitMQ topic exchange and routing/queue names used by
 // the note domain's publisher and the consumer worker.
 type Events struct {
@@ -30,12 +41,16 @@ type Events struct {
 	NoteWorkerQueue string `envconfig:"NOTE_WORKER_QUEUE" default:"note.created.worker"`
 }
 
+// feat:end
+// feat:if postgresql
 // Note configures the sample note domain. CacheTTL is the Redis cache-aside
 // entry lifetime for note reads.
 type Note struct {
 	CacheTTL time.Duration `envconfig:"CACHE_TTL" default:"60s"`
 }
 
+// feat:end
+// feat:if postgresql
 // Auth tunes the auth domain's HTTP-edge protections. RateLimit* throttle the
 // register/login/refresh endpoints per client IP to blunt credential
 // brute-forcing.
@@ -44,6 +59,8 @@ type Auth struct {
 	RateLimitWindow time.Duration `envconfig:"RATE_LIMIT_WINDOW" default:"1m"`
 }
 
+// feat:end
+// feat:if postgresql
 // JWT configures the auth domain's token signing. Secret is required (no
 // default) — the service fails fast at startup if it is empty.
 type JWT struct {
@@ -52,6 +69,7 @@ type JWT struct {
 	RefreshTTL time.Duration `envconfig:"REFRESH_TTL" default:"720h"`
 }
 
+// feat:end
 type Health struct {
 	Port     int           `envconfig:"PORT" default:"3333"`
 	Interval time.Duration `envconfig:"INTERVAL" default:"1m"`
@@ -100,6 +118,7 @@ func (f Fiber) ToSamsaraCfg() fiber.Config {
 	}
 }
 
+// feat:if postgresql
 type PostgreSQL struct {
 	Host           string        `envconfig:"HOST" default:"postgresql"`
 	Port           int           `envconfig:"PORT" default:"5432"`
@@ -113,6 +132,8 @@ type PostgreSQL struct {
 	MinConns       int32         `envconfig:"MIN_CONNS"`
 }
 
+// feat:end
+// feat:if rabbitmq
 type RabbitMQ struct {
 	Host           string        `envconfig:"HOST" default:"rabbitmq"`
 	Port           int           `envconfig:"PORT" default:"5672"`
@@ -124,6 +145,8 @@ type RabbitMQ struct {
 	PublishTimeout time.Duration `envconfig:"PUBLISH_TIMEOUT"`
 }
 
+// feat:end
+// feat:if redis
 type Redis struct {
 	Host           string        `envconfig:"HOST" default:"redis"`
 	Port           int           `envconfig:"PORT" default:"6379"`
@@ -149,6 +172,7 @@ type Redis struct {
 	TLSMinVersion         string `envconfig:"TLS_MIN_VERSION"`
 }
 
+// feat:end
 // S3 is optional object-storage config. No S3 component is registered in
 // main.go by default; wire one when you need uploads. Leave blank to ignore.
 type S3 struct {

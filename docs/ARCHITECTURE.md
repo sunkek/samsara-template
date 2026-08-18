@@ -49,6 +49,21 @@ HTTP → fiber adapter handler → Service (Domain method)
      → DB interface → postgresql adapter → Postgres
 ```
 
+<!-- feat:if template -->
+## Optional infrastructure
+
+Redis and RabbitMQ are outbound ports, never hard dependencies: `note` declares
+`Cache` and `Events`, and `auth` declares `Revoker`. Each has a stand-in — the
+domain's `NoopCache`/`NoopEvents`, and `auth/adapter/memory` for the revoker —
+so a build without that infra keeps the same call sites and loses only the
+capability. That is what makes `bootstrap.sh -F` a deletion rather than a
+rewrite: `cmd/main` picks a different adapter, and nothing else moves.
+
+Postgres is the exception. The sample domains exist to demonstrate persistence,
+so a build without it keeps the supervisor, the HTTP server, logging, metrics
+and the error mapping, and you add your own first domain.
+<!-- feat:end -->
+
 ## Auth
 
 `internal/domain/auth` is a full sample auth domain: register, login, refresh,

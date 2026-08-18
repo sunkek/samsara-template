@@ -2,7 +2,14 @@
 # driven by env/stage/*. Diverge from prod here as your staging needs grow
 # (resource limits, replicas, different published port, etc.). Merged on
 # docker-compose.yml.
+# An override with no services at all is not a valid compose file; the
+# empty mapping keeps `make up` working on an infra-only scaffold.
+# feat:if backend|frontend
 services:
+# feat:else
+#~ services: {}
+# feat:end
+  # feat:if backend
   backend:
     build:
       context: ../services/backend
@@ -14,6 +21,9 @@ services:
       retries: 5
       start_period: 10s
 
+  # feat:end
+
+  # feat:if frontend
   frontend:
     build:
       context: ../services/frontend
@@ -26,3 +36,4 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+  # feat:end
