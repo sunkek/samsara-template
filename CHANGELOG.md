@@ -24,10 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `govulncheck` step in backend CI.
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
+### Fixed
+- CI in a fork rendered without `backend` no longer skips every job: the
+  "unbootstrapped template" guard keyed on `services/backend/go.sum`, a file
+  such a fork never has, so GitHub CI, GitLab CI and CodeQL short-circuited
+  permanently. The guard is now gated on `backend`, CodeQL's language matrix is
+  gated per app service, and the CI definitions are pruned outright when neither
+  app service is selected (an empty `jobs:` is not a valid workflow).
+
 ### Changed
 - Feature-gated the last backend-specific leftovers so a fork without `backend`
   is self-consistent: the vite dev-server `/api` proxy and `VITE_API_BASE`,
   `env/example/api.env` and `docs/` (now pruned), the Makefile help text, `.PHONY`
   lists and comments, and the backend prose in `README.md`, `CLAUDE.md` and
   `AGENTS.md` — which now describe whichever build the fork actually is.
+- `CONTRIBUTING.md` and `SECURITY.md` no longer address template contributors in
+  a fork: the template-maintenance framing (contribution scope, samsara
+  components, "track `main` and re-apply patches") is now gated on the
+  template-only pseudo-feature, and the setup/PR checklists are gated per
+  feature.
+- The GitHub issue templates no longer ask forks to report bugs "in the
+  template".
 - Frontend CI now uses `npm ci` with npm cache (was `npm install`).

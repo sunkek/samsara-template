@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - id: check
+# feat:if backend
         run: |
           if [ -f services/backend/go.sum ]; then
             echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
@@ -23,6 +24,9 @@ jobs:
             echo "Template not bootstrapped (no go.sum); skipping CodeQL."
             echo "bootstrapped=false" >> "$GITHUB_OUTPUT"
           fi
+# feat:else
+#~         run: echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
+# feat:end
 
   analyze:
     needs: gate
@@ -36,10 +40,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+# feat:if backend
           - language: go
             build-mode: autobuild
+# feat:end
+# feat:if frontend
           - language: javascript-typescript
             build-mode: none
+# feat:end
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: github/codeql-action/init@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3

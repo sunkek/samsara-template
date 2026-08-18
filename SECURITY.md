@@ -2,9 +2,15 @@
 
 ## Supported versions
 
+<!-- feat:if template -->
 This is a project template. Security fixes land on the default branch (`main`).
 Adopters who have bootstrapped a project from this template should track `main`
 for fixes and re-apply relevant patches to their fork.
+<!-- feat:end -->
+<!-- feat:if !template -->
+<!--~ Security fixes land on the default branch (`main`). Only the latest release -->
+<!--~ is supported; upgrade before reporting. -->
+<!-- feat:end -->
 
 ## Reporting a vulnerability
 
@@ -23,11 +29,20 @@ reasonable window to ship a fix before any public disclosure.
 
 ## Scope
 
+<!-- feat:if template -->
 In scope: the backend service, the auth domain, the bootstrap script, the
 Docker/compose deployment manifests, and the CI configuration shipped in this
 repository.
+<!-- feat:end -->
+<!-- feat:if !template -->
+<!--~ In scope: the application code, the Docker/compose deployment manifests, and -->
+<!--~ the CI configuration shipped in this repository. -->
+<!-- feat:end -->
 
 Out of scope: vulnerabilities in third-party dependencies (report those
 upstream), and issues that require a misconfiguration explicitly warned against
-in the docs (e.g. running with `CORS_ALLOW_ORIGINS=*` or `SSL_MODE=disable` in
-production — see `CLAUDE.md`).
+in the docs.
+<!-- feat:if backend -->
+Examples of the latter: running with `CORS_ALLOW_ORIGINS=*` or `SSL_MODE=disable`
+in production — see `CLAUDE.md`.
+<!-- feat:end -->

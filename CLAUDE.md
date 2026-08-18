@@ -138,6 +138,9 @@ Concretely: `dev` runs air + the vite dev server, and `stage`/`prod` build the b
 <!-- feat:if frontend,!backend -->
 <!--~ Concretely: `dev` runs the vite dev server against mounted source; `stage`/`prod` build the SPA and serve `dist/` from nginx. Nothing is proxied — there is no backend in this build. -->
 <!-- feat:end -->
+<!-- feat:if backend,!frontend -->
+<!--~ Concretely: `dev` runs air against mounted source; `stage`/`prod` build the backend from `Dockerfile.prod` (scratch + a `/health` binary). The API port is published directly — there is no nginx in front of it. -->
+<!-- feat:end -->
 
 ### Host port mappings
 Host-side ports live in `env/<env>/ports.env`, which the Makefile sources before each `docker compose` call. Edit there to coexist with other projects already holding the defaults. Container-internal ports stay standard.

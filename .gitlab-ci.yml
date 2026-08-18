@@ -1,19 +1,27 @@
 # GitLab CI mirror of .github/workflows/ci.yml. Keep the two in sync.
+# feat:if backend
 #
 # Both jobs short-circuit while the repo is still the unbootstrapped template.
 # Presence of services/backend/go.sum is the signal: the template ships without
 # it; the adopter runs `go mod tidy` after bootstrap and commits the resulting
-# sum. Until then the guard exits 0 so pipelines stay green.
+# sum. Until then the guard exits 0 so pipelines stay green. A build without
+# `backend` has no go.sum to wait for, so the guard renders as a no-op there.
+# feat:end
 
 stages:
   - test
 
+# feat:if backend
 .template-guard: &template-guard
   - |
     if [ ! -f services/backend/go.sum ]; then
       echo "Template not bootstrapped (no go.sum); skipping CI."
       exit 0
     fi
+# feat:else
+#~ .template-guard: &template-guard
+#~   - 'true'
+# feat:end
 
 # feat:if backend
 backend:

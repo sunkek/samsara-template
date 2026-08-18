@@ -1,13 +1,19 @@
 name: Feature request
+# feat:if template
 description: Suggest a change to the template.
+# feat:else
+#~ description: Suggest a change.
+# feat:end
 labels: ["enhancement"]
 body:
+# feat:if template
   - type: markdown
     attributes:
       value: |
         Before opening, check the **Scope of changes welcome** section in
         `CONTRIBUTING.md`. This template aims to stay small and opinionated;
         feature requests that grow its surface area are unlikely to land.
+# feat:end
   - type: textarea
     id: problem
     attributes:
@@ -19,7 +25,11 @@ body:
     id: proposal
     attributes:
       label: Proposed change
+# feat:if template
       description: What should the template do instead? Concrete API/file/command sketches help.
+# feat:else
+#~       description: What should happen instead? Concrete API/file/command sketches help.
+# feat:end
     validations:
       required: true
   - type: textarea

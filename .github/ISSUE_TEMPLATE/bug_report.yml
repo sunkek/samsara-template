@@ -1,5 +1,9 @@
 name: Bug report
+# feat:if template
 description: Something in the template is broken or behaves wrong.
+# feat:else
+#~ description: Something is broken or behaves wrong.
+# feat:end
 labels: ["bug"]
 body:
   - type: textarea
@@ -7,8 +11,14 @@ body:
     attributes:
       label: What happened
       description: What you ran, what you expected, what actually happened.
+# feat:if backend
       placeholder: |
         Ran `make run-local`, expected backend on :8000, got "connection refused".
+# feat:end
+# feat:if frontend,!backend
+#~       placeholder: |
+#~         Ran `make run-local`, expected the app on :5173, got a blank page.
+# feat:end
     validations:
       required: true
   - type: textarea
@@ -39,5 +49,9 @@ body:
   - type: input
     id: commit
     attributes:
+# feat:if template
       label: Template commit / version
+# feat:else
+#~       label: Commit / version
+# feat:end
       placeholder: "git rev-parse HEAD"

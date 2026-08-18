@@ -90,6 +90,16 @@ prune redis \
   infra/redis \
   env/example/redis.env
 
+# With neither app service selected there is nothing for CI to build, and an
+# empty `jobs:`/pipeline is not a valid workflow — drop the CI definitions.
+if ! has backend && ! has frontend; then
+  for p in .github/workflows/ci.yml .github/workflows/codeql.yml .gitlab-ci.yml; do
+    [ -e "$p" ] || continue
+    rm -f "$p"
+    echo "  removed $p"
+  done
+fi
+
 # The in-memory revoker exists only as the Redis adapter's stand-in.
 if has redis; then
   rm -rf services/backend/internal/domain/auth/adapter/memory 2>/dev/null || true

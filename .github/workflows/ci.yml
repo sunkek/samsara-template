@@ -6,11 +6,14 @@ on:
   pull_request:
 
 jobs:
+# feat:if backend
   # Skip CI while the repo is still the unbootstrapped template. Presence of
   # services/backend/go.sum is the signal: the template ships without it; the
   # adopter runs `go mod tidy` after bootstrap and commits the resulting sum.
   # Until then there is nothing meaningful to build, so the real jobs are gated
-  # on this check.
+  # on this check. A build without `backend` has no go.sum to wait for, so the
+  # gate reports bootstrapped unconditionally there.
+# feat:end
   gate:
     runs-on: ubuntu-latest
     outputs:
@@ -18,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - id: check
+# feat:if backend
         run: |
           if [ -f services/backend/go.sum ]; then
             echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
@@ -25,6 +29,9 @@ jobs:
             echo "Template not bootstrapped (no go.sum); skipping CI."
             echo "bootstrapped=false" >> "$GITHUB_OUTPUT"
           fi
+# feat:else
+#~         run: echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
+# feat:end
 
   # feat:if backend
   backend:
@@ -152,6 +159,20 @@ jobs:
           cd /tmp/render/app/services/frontend
           npm install --no-audit --no-fund
           npm run build
+      - name: CI definitions are valid
+        run: |
+          cd /tmp/render/app
+          python3 - <<'EOF'
+          import glob, sys, yaml
+          for f in sorted(glob.glob(".github/workflows/*.yml")) + glob.glob(".gitlab-ci.yml"):
+              doc = yaml.safe_load(open(f))
+              if f.startswith(".github") and not doc.get("jobs"):
+                  sys.exit(f"{f}: rendered workflow has no jobs")
+              if f == ".gitlab-ci.yml" and not [k for k in doc
+                                                if not k.startswith(".") and k != "stages"]:
+                  sys.exit(f"{f}: rendered pipeline has no jobs")
+              print("ok", f)
+          EOF
       - name: compose config is valid
         run: |
           docker network create dev || true
