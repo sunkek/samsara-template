@@ -7,7 +7,14 @@
 # redis:8, …). For a hardened prod deploy, pin them by digest instead
 # (e.g. `image: postgres:18@sha256:<digest>`) so a re-pull cannot drift. Resolve
 # digests in your release pipeline (`docker buildx imagetools inspect <ref>`).
+# An override with no services at all is not a valid compose file; the
+# empty mapping keeps `make up` working on an infra-only scaffold.
+# feat:if backend|frontend|postgresql|rabbitmq|redis
 services:
+# feat:else
+#~ services: {}
+# feat:end
+  # feat:if backend
   backend:
     build:
       context: ../services/backend
@@ -27,6 +34,9 @@ services:
         reservations:
           memory: 128M
 
+  # feat:end
+
+  # feat:if frontend
   frontend:
     build:
       context: ../services/frontend
@@ -45,6 +55,9 @@ services:
           cpus: "0.5"
           memory: 128M
 
+  # feat:end
+
+  # feat:if postgresql
   postgresql:
     deploy:
       resources:
@@ -54,6 +67,9 @@ services:
         reservations:
           memory: 256M
 
+  # feat:end
+
+  # feat:if rabbitmq
   rabbitmq:
     deploy:
       resources:
@@ -63,6 +79,9 @@ services:
         reservations:
           memory: 128M
 
+  # feat:end
+
+  # feat:if redis
   redis:
     deploy:
       resources:
@@ -71,3 +90,4 @@ services:
           memory: 256M
         reservations:
           memory: 64M
+  # feat:end

@@ -13,19 +13,34 @@ import (
 	"github.com/sunkek/samsara-template/backend/internal/common/e"
 	"github.com/sunkek/samsara-template/backend/internal/common/metrics"
 	"github.com/sunkek/samsara-template/backend/internal/common/middleware"
+	// feat:if template
+	// The sample domains are Postgres-backed; a build without Postgres keeps
+	// only the supervisor + HTTP skeleton. See scripts/apply_features.sh.
+	// feat:end
+	// feat:if postgresql
 	"github.com/sunkek/samsara-template/backend/internal/domain/auth"
 	authfiber "github.com/sunkek/samsara-template/backend/internal/domain/auth/adapter/fiber"
+	// feat:if !redis
+	//~ authmemory "github.com/sunkek/samsara-template/backend/internal/domain/auth/adapter/memory"
+	// feat:end
 	authpostgresql "github.com/sunkek/samsara-template/backend/internal/domain/auth/adapter/postgresql"
+	// feat:if redis
 	authredis "github.com/sunkek/samsara-template/backend/internal/domain/auth/adapter/redis"
+	// feat:end
 	"github.com/sunkek/samsara-template/backend/internal/domain/note"
 	notefiber "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/fiber"
 	notepostgresql "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/postgresql"
-	noterabbit "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/rabbitmq"
+	// feat:if redis
 	noteredis "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/redis"
+	// feat:end
+	// feat:if rabbitmq
+	noterabbit "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/rabbitmq"
 	"github.com/sunkek/samsara-template/backend/internal/domain/notestats"
 	notestatsfiber "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/fiber"
 	notestatspostgresql "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/postgresql"
 	notestatsrabbit "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/rabbitmq"
+	// feat:end
+	// feat:end
 
 	"github.com/gofiber/contrib/v3/swaggo"
 	gf "github.com/gofiber/fiber/v3"
@@ -33,9 +48,15 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/sunkek/samsara"
 	"github.com/sunkek/samsara-components/fiber"
+	// feat:if postgresql
 	"github.com/sunkek/samsara-components/postgresql"
+	// feat:end
+	// feat:if rabbitmq
 	"github.com/sunkek/samsara-components/rabbitmq"
+	// feat:end
+	// feat:if redis
 	"github.com/sunkek/samsara-components/redis"
+	// feat:end
 )
 
 // @Title						My Project API
@@ -110,12 +131,16 @@ func main() {
 	)
 	sup.Add(hs, samsara.WithTier(samsara.TierCritical))
 
+	// feat:if postgresql
 	postgresCmp := postgresql.New(postgresql.Config(cfg.PostgreSQL), postgresql.WithLogger(logger), postgresql.WithName("postgresql"))
 	sup.Add(postgresCmp,
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
 	)
 
+	// feat:end
+
+	// feat:if rabbitmq
 	rabbitCmp := rabbitmq.New(rabbitmq.Config(cfg.RabbitMQ), rabbitmq.WithLogger(logger), rabbitmq.WithName("rabbitmq"))
 	sup.Add(rabbitCmp,
 		samsara.WithTier(samsara.TierCritical),
@@ -128,14 +153,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	// feat:end
+
+	// feat:if redis
 	redisCmp := redis.New(redis.Config(cfg.Redis), redis.WithLogger(logger), redis.WithName("redis"))
 	sup.Add(redisCmp,
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
 	)
 
+	// feat:end
+
 	fiberCmp := fiber.New(cfg.Fiber.ToSamsaraCfg(), fiber.WithLogger(logger), fiber.WithName("fiber"))
-	fiberDeps := []string{postgresCmp.Name(), redisCmp.Name(), rabbitCmp.Name()}
+	// The HTTP server starts only once the infra it talks to is up.
+	fiberDeps := make([]string, 0, 3)
+	// feat:if postgresql
+	fiberDeps = append(fiberDeps, postgresCmp.Name())
+	// feat:end
+	// feat:if redis
+	fiberDeps = append(fiberDeps, redisCmp.Name())
+	// feat:end
+	// feat:if rabbitmq
+	fiberDeps = append(fiberDeps, rabbitCmp.Name())
+	// feat:end
 
 	// Correlate every request: assign/propagate X-Request-ID and seed a
 	// request-scoped logger. Registered first so all routes are covered.
@@ -166,6 +206,7 @@ func main() {
 		samsara.WithDependencies(fiberDeps...),
 	)
 
+	// feat:if postgresql
 	// Domains. Build each as DB adapter → domain → REST adapter. The REST
 	// adapter takes the domain's inbound Service interface, so wiring is
 	// compile-time checked. Construct domains with no cross-domain deps first
@@ -174,7 +215,13 @@ func main() {
 	// auth: owns users and JWT. Built first so its middleware can guard the
 	// other domains' routes.
 	authDB := authpostgresql.New(postgresCmp)
+	// feat:if redis
 	authRevoker := authredis.New(redisCmp)
+	// feat:else
+	//~ // Without Redis the denylist is process-local and resets on restart —
+	//~ // fine for one replica, wire a shared store before scaling out.
+	//~ authRevoker := authmemory.New()
+	// feat:end
 	authDomain := auth.New(authDB, authRevoker, cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 	// Throttle the credential endpoints per client IP to blunt brute-forcing.
 	authLimiter := middleware.RateLimit(middleware.RateLimitConfig{
@@ -197,14 +244,24 @@ func main() {
 	}
 	fiberCmp.Use(authREST.Middleware(publicPrefixes...))
 
-	// note: protected sample domain. Reads are cache-aside via Redis; creates
-	// publish a note.created event to RabbitMQ.
+	// note: protected sample domain, wired to whichever optional infra this
+	// build has — cache-aside reads via Redis, note.created events via RabbitMQ,
+	// and the domain's Noop ports in place of either when it is absent.
 	noteDB := notepostgresql.New(postgresCmp)
+	// feat:if redis
 	noteCache := noteredis.New(redisCmp, cfg.Note.CacheTTL)
+	// feat:else
+	//~ noteCache := note.NoopCache{}
+	// feat:end
+	// feat:if rabbitmq
 	noteEvents := noterabbit.New(rabbitCmp, cfg.Events.Exchange, cfg.Events.NoteCreatedKey)
+	// feat:else
+	//~ noteEvents := note.NoopEvents{}
+	// feat:end
 	noteDomain := note.New(noteDB, noteCache, noteEvents)
 	_ = notefiber.New(fiberCmp, noteDomain)
 
+	// feat:if rabbitmq
 	// notestats: a read model projected from note.created events (CQRS-lite).
 	// The rabbitmq component owns the consume loop; we register a handler and a
 	// queue bound to the events exchange. Subscribe is safe before Start — the
@@ -217,6 +274,8 @@ func main() {
 		os.Exit(1)
 	}
 	_ = notestatsfiber.New(fiberCmp, statsDomain)
+	// feat:end
+	// feat:end
 
 	app := samsara.NewApplication(
 		samsara.WithSupervisor(sup),

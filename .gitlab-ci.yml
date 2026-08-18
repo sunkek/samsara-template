@@ -15,6 +15,7 @@ stages:
       exit 0
     fi
 
+# feat:if backend
 backend:
   stage: test
   image: golang:1.26.4
@@ -46,6 +47,9 @@ backend-lint:
     - cd services/backend
     - golangci-lint run
 
+# feat:end
+
+# feat:if frontend
 frontend:
   stage: test
   image: node:22
@@ -58,3 +62,4 @@ frontend:
     - npm install
     - npm run lint
     - npm run build
+# feat:end

@@ -1,6 +1,13 @@
 # Dev override: hot reload. Backend runs air, frontend runs the vite dev
 # server, both with source mounted. Merged on top of docker-compose.yml.
+# An override with no services at all is not a valid compose file; the
+# empty mapping keeps `make up` working on an infra-only scaffold.
+# feat:if backend|frontend
 services:
+# feat:else
+#~ services: {}
+# feat:end
+  # feat:if backend
   backend:
     build:
       context: ../services/backend
@@ -16,6 +23,9 @@ services:
       retries: 5
       start_period: 20s
 
+  # feat:end
+
+  # feat:if frontend
   frontend:
     build:
       context: ../services/frontend
@@ -31,3 +41,4 @@ services:
       # Anonymous volume keeps the image's node_modules from being hidden by
       # the source mount.
       - /app/node_modules
+  # feat:end

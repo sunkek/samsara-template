@@ -12,13 +12,17 @@ APP ?= my_project
 COMPOSE_FILES := -f infra/docker-compose.yml -f infra/docker-compose.$(ENVIRONMENT).yml
 # Shared external bridge created once via `docker network create dev`.
 NETWORK := dev
+# feat:if postgresql
 # Postgres container for this environment (psql / migrate / dump targets).
 PG_CONTAINER := my_project_postgresql_$(ENVIRONMENT)
 
 POSTGRES_ENV := $(ENV_DIR)/$(ENVIRONMENT)/postgresql.env
+# feat:end
 PORTS_ENV := $(ENV_DIR)/$(ENVIRONMENT)/ports.env
+# feat:if postgresql
 MIGRATIONS_DIR := ./infra/postgresql/migration
 BACKUP_DIR := ./infra/postgresql/backup
+# feat:end
 
 # Host-side port mappings live in $(PORTS_ENV). Source it before every docker
 # compose invocation so the file's variables drive port interpolation, and
@@ -26,6 +30,8 @@ BACKUP_DIR := ./infra/postgresql/backup
 # container/volume name suffixes.
 COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] && . "$(PORTS_ENV)"; set +a; docker compose $(COMPOSE_FILES)
 
+# .PHONY lists every target the template can ship; entries whose target was
+# removed by a feature selection are simply inert.
 .PHONY: help gen-env gen-key-hex gen-key-b64 gen-api-docs \
 	up down down-v restart restart-v restart-local restart-local-v \
 	run run-local stop logs ps pull \
@@ -44,6 +50,7 @@ help:
 	@echo "  make run-local                - Start dev infra; run backend (air) + frontend (vite) on host"
 	@echo "  make stop                     - Stop and remove containers"
 	@echo "  make logs                     - Follow compose logs"
+# feat:if postgresql
 	@echo "  make psql                     - Open psql as APP_USER"
 	@echo "  make psql-admin               - Open psql as POSTGRES_USER"
 	@echo "  make migrate-new n=<name>     - Create migration file pair"
@@ -53,6 +60,7 @@ help:
 	@echo "  make test-integration         - Run tagged integration tests against dev infra"
 	@echo "  make pg-dump [DUMP_FILE=...]  - Dump APP_DB to SQL file"
 	@echo "  make pg-restore DUMP_FILE=... - Restore APP_DB from SQL file"
+# feat:end
 
 # Generators
 
@@ -130,10 +138,13 @@ gen-key-hex:
 gen-key-b64:
 	openssl rand --base64 32
 
+# feat:if backend
 gen-api-docs:
 	cd ./services/backend && \
 	swag fmt -d ./cmd/main && \
 	swag init -d ./cmd/main -o ./docs --parseInternal --parseDependency --parseDependencyLevel=1
+
+# feat:end
 
 # Runtime
 
@@ -168,6 +179,31 @@ run:
 # and frontend (vite) on the host. It sources env/local/* directly — the
 # backend's air launch reads env/local/api.env via -l, so the vite proxy and
 # the compose host-port mapping must agree with that same file.
+# Infra containers run-local brings up, and the host processes it launches.
+# Both are feature-dependent; `true;` keeps the joined recipe line valid when a
+# half is not selected.
+LOCAL_INFRA :=
+# feat:if postgresql
+LOCAL_INFRA += postgresql
+# feat:end
+# feat:if rabbitmq
+LOCAL_INFRA += rabbitmq
+# feat:end
+# feat:if redis
+LOCAL_INFRA += redis
+# feat:end
+
+# feat:if backend
+RUN_LOCAL_BACKEND := (cd ./services/backend && air -c .air.toml) &
+# feat:else
+#~ RUN_LOCAL_BACKEND := true;
+# feat:end
+# feat:if frontend
+RUN_LOCAL_FRONTEND := (cd ./services/frontend && npm run dev);
+# feat:else
+#~ RUN_LOCAL_FRONTEND := true;
+# feat:end
+
 LOCAL_PORTS_ENV := $(ENV_DIR)/local/ports.env
 LOCAL_API_ENV   := $(ENV_DIR)/local/api.env
 
@@ -177,10 +213,10 @@ run-local:
 	[ -f "$(LOCAL_PORTS_ENV)" ] && . "$(LOCAL_PORTS_ENV)"; \
 	[ -f "$(LOCAL_API_ENV)" ] && . "$(LOCAL_API_ENV)"; \
 	set +a; \
-	docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d postgresql rabbitmq redis; \
+	docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d $(LOCAL_INFRA); \
 	trap 'kill 0' EXIT; \
-	(cd ./services/backend && air -c .air.toml) & \
-	(cd ./services/frontend && npm run dev); \
+	$(RUN_LOCAL_BACKEND) \
+	$(RUN_LOCAL_FRONTEND) \
 	wait
 
 stop:
@@ -195,6 +231,7 @@ ps:
 pull:
 	$(COMPOSE_WITH_PORTS) pull
 
+# feat:if postgresql
 # PostgreSQL
 
 psql:
@@ -207,6 +244,7 @@ psql-admin:
 	PGPASSWORD="$$POSTGRES_PASSWORD" docker exec -it $(PG_CONTAINER) \
 		psql -U "$$POSTGRES_USER" -d postgres
 
+# feat:if backend
 # Run the integration-tagged tests (services/backend/internal/integration)
 # against the running dev infra. Bring infra up and apply migrations first:
 #   make run && make migrate-up && make test-integration
@@ -220,6 +258,7 @@ test-integration:
 	export INTEGRATION_DATABASE_URL="postgres://$$APP_USER:$$APP_PASSWORD@localhost:$$MY_PROJECT_PG_PORT/$$APP_DB?sslmode=disable"; \
 	echo "Running integration tests against localhost:$$MY_PROJECT_PG_PORT/$$APP_DB"; \
 	cd services/backend && go test -tags=integration ./internal/integration/...
+# feat:end
 
 pg-dump:
 	@set -euo pipefail; \
@@ -281,3 +320,4 @@ migrate-force:
 		migrate/migrate -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		force $(v)
+# feat:end

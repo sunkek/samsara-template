@@ -26,6 +26,7 @@ jobs:
             echo "bootstrapped=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # feat:if backend
   backend:
     needs: gate
     if: needs.gate.outputs.bootstrapped == 'true'
@@ -60,6 +61,9 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
+  # feat:end
+
+  # feat:if frontend
   frontend:
     needs: gate
     if: needs.gate.outputs.bootstrapped == 'true'
@@ -80,3 +84,71 @@ jobs:
         run: npm run lint
       - name: build
         run: npm run build
+  # feat:end
+
+  # feat:if template
+  # Unit tests for the feature renderer itself. Cheap, so it gates the (much
+  # slower) matrix job below.
+  feature-renderer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: scripts/features_test.sh
+
+  # Template-maintenance job: proves every feature combination still renders and
+  # builds. The `template` feature is never selected by apply_features.sh, so
+  # this job exists only in the template and disappears from every fork.
+  feature-matrix:
+    needs: feature-renderer
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - backend,frontend,postgresql,redis,rabbitmq
+          - backend,postgresql,redis,rabbitmq
+          - backend,frontend,postgresql
+          - backend,postgresql,redis
+          - backend,postgresql,rabbitmq
+          - backend
+          - frontend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/backend/go.mod
+      - name: render
+        run: |
+          mkdir -p /tmp/render
+          cp -R . /tmp/render/app
+          rm -rf /tmp/render/app/.git
+          ./scripts/apply_features.sh -f "${{ matrix.features }}" -C /tmp/render/app
+      - name: no markers left
+        run: |
+          # bootstrap.sh drops the feature tooling from a fork; do the same here
+          # so the marker syntax in its own source does not count as a leftover.
+          rm -f /tmp/render/app/scripts/apply_features.sh /tmp/render/app/scripts/features.awk \
+                /tmp/render/app/scripts/features_test.sh
+          if grep -rnE "feat:(if|else|end)" /tmp/render/app --exclude-dir=.git; then
+            echo "unrendered feature markers survived"; exit 1
+          fi
+      - name: backend builds
+        run: |
+          [ -d /tmp/render/app/services/backend ] || exit 0
+          cd /tmp/render/app/services/backend
+          go mod tidy
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet ./...
+          go build ./cmd/main
+          go test ./...
+      - name: compose config is valid
+        run: |
+          docker network create dev || true
+          cd /tmp/render/app
+          make gen-env APP=matrix_app GEN_ENVS="dev local stage prod"
+          for env in dev stage prod; do
+            ENVIRONMENT=$env docker compose \
+              -f infra/docker-compose.yml -f infra/docker-compose.$env.yml \
+              --profile app config >/dev/null
+          done
+  # feat:end

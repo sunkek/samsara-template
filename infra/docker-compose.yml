@@ -10,15 +10,24 @@ networks:
   dev:
     external: true
 
+# feat:if postgresql|rabbitmq|redis
 volumes:
+  # feat:if postgresql
   postgresql_data:
     name: my_project_postgresql_data_${ENVIRONMENT:-dev}
+  # feat:end
+  # feat:if rabbitmq
   rabbitmq_data:
     name: my_project_rabbitmq_data_${ENVIRONMENT:-dev}
+  # feat:end
+  # feat:if redis
   redis_data:
     name: my_project_redis_data_${ENVIRONMENT:-dev}
+  # feat:end
+# feat:end
 
 services:
+  # feat:if postgresql
   postgresql:
     image: postgres:18
     container_name: my_project_postgresql_${ENVIRONMENT:-dev}
@@ -45,6 +54,9 @@ services:
     labels:
       - traefik.enable=false
 
+  # feat:end
+
+  # feat:if rabbitmq
   rabbitmq_init:
     image: dibi/envsubst:1
     container_name: my_project_rabbitmq_init_${ENVIRONMENT:-dev}
@@ -91,6 +103,9 @@ services:
     labels:
       - traefik.enable=false
 
+  # feat:end
+
+  # feat:if redis
   redis_init:
     image: dibi/envsubst:1
     container_name: my_project_redis_init_${ENVIRONMENT:-dev}
@@ -135,20 +150,31 @@ services:
     labels:
       - traefik.enable=false
 
+  # feat:end
+
   # App services: common wiring here, env-specific build/ports/mounts in the
   # override. Behind the "app" profile so `make run` / `make run-local` (no
   # profile) start only infra; `make up` passes --profile app.
+  # feat:if backend
   backend:
     profiles: ["app"]
     container_name: my_project_backend_${ENVIRONMENT:-dev}
     restart: unless-stopped
+    # feat:if postgresql|rabbitmq|redis
     depends_on:
+      # feat:if postgresql
       postgresql:
         condition: service_healthy
+      # feat:end
+      # feat:if rabbitmq
       rabbitmq:
         condition: service_healthy
+      # feat:end
+      # feat:if redis
       redis:
         condition: service_healthy
+      # feat:end
+    # feat:end
     networks:
       dev:
         aliases:
@@ -159,22 +185,34 @@ services:
       # api.env points at localhost (host runs); in-network the backend reaches
       # each dependency by its stable alias on the standard internal port.
       MY_PROJECT_API_FIBER_HOST: "0.0.0.0"
+      # feat:if postgresql
       MY_PROJECT_API_POSTGRESQL_HOST: postgresql
+      # feat:end
+      # feat:if rabbitmq
       MY_PROJECT_API_RABBITMQ_HOST: rabbitmq
+      # feat:end
+      # feat:if redis
       MY_PROJECT_API_REDIS_HOST: redis
+      # feat:end
     expose:
       - 8000
     labels:
       - traefik.enable=false
 
+  # feat:end
+
+  # feat:if frontend
   frontend:
     profiles: ["app"]
     container_name: my_project_frontend_${ENVIRONMENT:-dev}
     restart: unless-stopped
+    # feat:if backend
     depends_on:
       backend:
         condition: service_healthy
+    # feat:end
     networks:
       - dev
     labels:
       - traefik.enable=false
+  # feat:end

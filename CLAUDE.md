@@ -32,6 +32,7 @@ make gen-api-docs     # regenerate Swagger (swag fmt + swag init)
 ```
 
 ### Database migrations
+<!-- feat:if postgresql -->
 ```bash
 make migrate-new n=<name>   # create migration file pair
 make migrate-up             # apply all pending migrations
@@ -40,6 +41,7 @@ make migrate-force v=<num>  # force migration version
 make psql                   # psql as app user
 make psql-admin             # psql as postgres superuser
 ```
+<!-- feat:end -->
 
 ## Architecture
 
@@ -66,11 +68,13 @@ Each domain declares two ports in `interface.go`: `Service` (inbound — the use
 
 **Adding a new domain:** copy the `note` domain as a starting point, then wire it in `cmd/main/main.go` as DB adapter → `domain.New(db, …deps)` → REST adapter (`fiber.New(fiberCmp, domain)`). Order matters — domains with no cross-domain dependencies must be constructed first.
 
+<!-- feat:if postgresql -->
 **Sample `note` domain:** demonstrates the full vertical slice plus a Redis **cache-aside** read path via a `Cache` outbound port (`adapter/redis`): `Get`/`List` serve from cache on a hit and populate it on a miss; `Create` warms the item and invalidates the list. Caching is best-effort (errors fall back to the DB) and tunable via `MY_PROJECT_API_NOTE_CACHE_TTL`; pass `note.NoopCache{}` to disable it. `Create` also publishes a `note.created` event through an `Events` port (`adapter/rabbitmq`) to a RabbitMQ topic exchange (best-effort; `note.NoopEvents{}` disables).
 
 **`notestats` read model:** a separate domain (CQRS-lite) that projects `note.created` events into a single-row `note_stats` table. The samsara rabbitmq component owns the consume loop; `notestats/adapter/rabbitmq` is the message handler, `adapter/postgresql` the projection store, and `adapter/fiber` exposes it at `GET /api/v1/stats`. Event/exchange/queue names are under `MY_PROJECT_API_EVENTS_*`. This is the end-to-end async demo: note create → publish → broker → consumer → projection → `/stats`.
 
 **Auth:** `internal/domain/auth` is a full sample auth domain (register/login/refresh/logout/JWT-verify). Its fiber adapter exposes `Middleware(publicPrefixes...)`, registered in `cmd/main` via `fiberCmp.Use(...)` to protect all routes except `/auth` and `/docs`. Read claims with `authfiber.ClaimsFromContext`. Requires `MY_PROJECT_API_JWT_SECRET`. Refresh tokens are revocable: `POST /auth/logout` denylists a refresh token, and `/auth/refresh` rotates (single-use) the presented token. Revocation is backed by the required `Revoker` port — the Redis adapter (`adapter/redis`) is the production wiring, injected positionally into `auth.New` in `cmd/main` (tests pass a stub). Access tokens stay short-lived and are not individually revoked. (Health probes hit the samsara health server on its own port; the fiber component's built-in `/health` registers ahead of the middleware and stays public regardless, but the project doesn't rely on it.)
+<!-- feat:end -->
 
 ### Config
 Loaded via `github.com/kelseyhightower/envconfig` with prefix `MY_PROJECT_API`. Pass `-l` to load `env/local/api.env` for local development outside Docker. All env var names follow `MY_PROJECT_API_<SECTION>_<FIELD>` (e.g. `MY_PROJECT_API_POSTGRESQL_HOST`).
@@ -95,6 +99,19 @@ Host-side ports for the dev/local infra (Postgres, RabbitMQ, Redis) live in `env
 
 ### Error handling
 `github.com/sunkek/mishap`. Error codes in `internal/common/e/e.go`: `NotFound`, `Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`. Wrap with `mishap.Wrap(err, "message")`. The Fiber error handler in `cmd/main/main.go` maps these codes to HTTP statuses.
+
+<!-- feat:if template -->
+## Feature selection
+
+This repo is the all-features build. `bootstrap.sh -F <features>` (implemented by
+`scripts/apply_features.sh`) renders it down to any subset of `backend`,
+`frontend`, `postgresql`, `redis`, `rabbitmq`, deleting everything the
+deselected features own. Marker syntax and the rules for editing marked files
+are in `AGENTS.md`; the `feature-matrix` CI job proves every combination still
+builds. Deselecting `postgresql` removes the sample domains (they are all
+Postgres-backed); deselecting `redis` or `rabbitmq` falls back to
+`auth/adapter/memory` and the `note` domain's Noop ports.
+<!-- feat:end -->
 
 ## First-run checklist after cloning
 1. Install host tools for live reload: `go install github.com/air-verse/air@latest` and `go install github.com/swaggo/swag/v2/cmd/swag@latest` (needed by `make run-local` / `.air.toml` pre_cmd)
