@@ -25,7 +25,9 @@ type DB interface {
 
 // Cache is the outbound port for read caching (cache-aside). It is best-effort:
 // the domain treats any cache error as a miss and falls back to the DB, so a
-// cache outage never fails a request. The bool reports a hit. The Redis adapter
+// cache outage never fails a request — but it logs the error, so a cache that
+// is down is visible rather than silent. The bool reports a hit. Hit/miss
+// metrics belong to the implementation, not to this port. The Redis adapter
 // implements it; NoopCache disables caching without touching call sites.
 type Cache interface {
 	GetNote(ctx context.Context, id string) (model.Note, bool, error)

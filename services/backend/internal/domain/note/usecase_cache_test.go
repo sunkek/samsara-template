@@ -2,6 +2,7 @@ package note
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
@@ -32,6 +33,7 @@ type stubCache struct {
 	note    model.Note
 	listHit bool
 	list    []model.Note
+	getErr  error
 
 	setNote    int
 	setList    int
@@ -39,11 +41,11 @@ type stubCache struct {
 }
 
 func (s *stubCache) GetNote(context.Context, string) (model.Note, bool, error) {
-	return s.note, s.noteHit, nil
+	return s.note, s.noteHit, s.getErr
 }
 func (s *stubCache) SetNote(context.Context, model.Note) error { s.setNote++; return nil }
 func (s *stubCache) GetList(context.Context) ([]model.Note, bool, error) {
-	return s.list, s.listHit, nil
+	return s.list, s.listHit, s.getErr
 }
 func (s *stubCache) SetList(context.Context, []model.Note) error { s.setList++; return nil }
 func (s *stubCache) InvalidateList(context.Context) error        { s.invalidate++; return nil }
@@ -112,4 +114,42 @@ func TestCreateWarmsItemAndInvalidatesList(t *testing.T) {
 	if cache.invalidate != 1 {
 		t.Errorf("want list invalidated, invalidate = %d", cache.invalidate)
 	}
+}
+
+// A cache that is down must not fail the request: reads fall through to the
+// database, which is the whole point of the port being best-effort.
+func TestCacheReadErrorFallsBackToDB(t *testing.T) {
+	down := errors.New("redis unreachable")
+
+	t.Run("get", func(t *testing.T) {
+		db := &countingDB{note: model.Note{ID: "n1", Title: "from db"}}
+		d := New(db, &stubCache{getErr: down}, NoopEvents{})
+
+		got, err := d.Get(context.Background(), "n1")
+		if err != nil {
+			t.Fatalf("get: %v", err)
+		}
+		if got.Title != "from db" {
+			t.Errorf("title = %q, want the database value", got.Title)
+		}
+		if db.getCalls != 1 {
+			t.Errorf("db.Get called %d times, want 1", db.getCalls)
+		}
+	})
+
+	t.Run("list", func(t *testing.T) {
+		db := &countingDB{list: []model.Note{{ID: "n1"}}}
+		d := New(db, &stubCache{getErr: down}, NoopEvents{})
+
+		got, err := d.List(context.Background())
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 1 {
+			t.Errorf("got %d notes, want 1 from the database", len(got))
+		}
+		if db.listCalls != 1 {
+			t.Errorf("db.List called %d times, want 1", db.listCalls)
+		}
+	})
 }

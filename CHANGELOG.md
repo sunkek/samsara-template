@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- Cache read failures in the `note` domain were discarded (`_`), so a Redis
+  outage was silent on the read path while write-path failures logged. Reads now
+  log the error and still fall back to the database.
+- Cache hit/miss metrics moved from the `note` use cases into the Redis adapter.
+  They were counted in the domain, so a build wired with `NoopCache` recorded a
+  miss on every read and reported a permanent 0% hit rate for a deployment that
+  has no cache at all.
 - `auth.Revoker`'s doc comment described the default implementation as "an
   in-memory no-op". There is no no-op revoker: `auth/adapter/memory` is a real
   process-local denylist, and a no-op there would make logout a lie.

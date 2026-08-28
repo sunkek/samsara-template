@@ -1,6 +1,8 @@
 // Package redis implements the note domain's Cache outbound port on top of the
-// samsara Redis component. Values are JSON-encoded; reads return found=false on
-// a miss or any error so the domain falls back to the database.
+// samsara Redis component. Values are JSON-encoded. A miss reports
+// found=false with no error; a Redis or decode failure reports the error, which
+// the domain logs and treats as a miss. Cache hit/miss metrics are recorded
+// here, so a build wired with NoopCache emits none.
 package redis
 
 import (
@@ -11,6 +13,7 @@ import (
 
 	rediscmp "github.com/sunkek/samsara-components/redis"
 
+	"github.com/sunkek/samsara-template/backend/internal/common/metrics"
 	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
 )
 
@@ -30,7 +33,13 @@ func New(rdb rediscmp.Client, ttl time.Duration) *Adapter {
 }
 
 func (a *Adapter) GetNote(ctx context.Context, id string) (model.Note, bool, error) {
-	return a.getJSON(ctx, noteKeyPrefix+id, &model.Note{})
+	var n model.Note
+	found, err := a.getJSON(ctx, noteKeyPrefix+id, &n)
+	recordLookup(found)
+	if err != nil {
+		return model.Note{}, false, err
+	}
+	return n, found, nil
 }
 
 func (a *Adapter) SetNote(ctx context.Context, n model.Note) error {
@@ -39,17 +48,12 @@ func (a *Adapter) SetNote(ctx context.Context, n model.Note) error {
 
 func (a *Adapter) GetList(ctx context.Context) ([]model.Note, bool, error) {
 	var notes []model.Note
-	s, err := a.rdb.Get(ctx, listKey)
+	found, err := a.getJSON(ctx, listKey, &notes)
+	recordLookup(found)
 	if err != nil {
-		if errors.Is(err, rediscmp.ErrNil) {
-			return nil, false, nil
-		}
 		return nil, false, err
 	}
-	if err := json.Unmarshal([]byte(s), &notes); err != nil {
-		return nil, false, err
-	}
-	return notes, true, nil
+	return notes, found, nil
 }
 
 func (a *Adapter) SetList(ctx context.Context, notes []model.Note) error {
@@ -61,19 +65,32 @@ func (a *Adapter) InvalidateList(ctx context.Context) error {
 	return err
 }
 
-// getJSON fetches and decodes a single note. dst must be *model.Note.
-func (a *Adapter) getJSON(ctx context.Context, key string, dst *model.Note) (model.Note, bool, error) {
+// getJSON fetches key and decodes it into dst. A miss reports found=false with
+// no error; a decode failure reports the error, which the domain treats as a
+// miss and logs.
+func (a *Adapter) getJSON(ctx context.Context, key string, dst any) (bool, error) {
 	s, err := a.rdb.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, rediscmp.ErrNil) {
-			return model.Note{}, false, nil
+			return false, nil
 		}
-		return model.Note{}, false, err
+		return false, err
 	}
 	if err := json.Unmarshal([]byte(s), dst); err != nil {
-		return model.Note{}, false, err
+		return false, err
 	}
-	return *dst, true, nil
+	return true, nil
+}
+
+// recordLookup counts hits and misses here rather than in the domain: whether a
+// lookup hit is a fact about this cache, and a build wired with NoopCache has
+// no cache to report on, so it should emit nothing at all.
+func recordLookup(found bool) {
+	if found {
+		metrics.CacheHit()
+		return
+	}
+	metrics.CacheMiss()
 }
 
 func (a *Adapter) setJSON(ctx context.Context, key string, v any) error {

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/sunkek/samsara-template/backend/internal/common/logging"
-	"github.com/sunkek/samsara-template/backend/internal/common/metrics"
 	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
 )
 
@@ -12,12 +11,14 @@ import (
 // otherwise read the DB and populate the cache. Cache failures are logged but
 // do not fail the request.
 func (d *Domain) List(ctx context.Context) ([]model.Note, error) {
-	if notes, ok, _ := d.cache.GetList(ctx); ok {
-		metrics.CacheHit()
+	notes, ok, err := d.cache.GetList(ctx)
+	if err != nil {
+		logging.From(ctx).Warn("note list cache get failed", "error", err)
+	}
+	if ok {
 		return notes, nil
 	}
-	metrics.CacheMiss()
-	notes, err := d.db.List(ctx)
+	notes, err = d.db.List(ctx)
 	if err != nil {
 		return nil, err
 	}

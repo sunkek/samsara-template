@@ -97,9 +97,11 @@ and the error mapping, and you add your own first domain.
 <!-- feat:if redis -->
 Reads are **cache-aside** through a `Cache` port (`adapter/redis`): `Get`/`List`
 serve from cache on a hit and populate it on a miss; `Create` warms the item and
-invalidates the list. Caching is best-effort — a cache error falls back to the
-DB — and the TTL is `MY_PROJECT_API_NOTE_CACHE_TTL`. Pass `note.NoopCache{}` to
-disable it.
+invalidates the list. Caching is best-effort — a cache error is logged and falls
+back to the DB, never failing the request — and the TTL is
+`MY_PROJECT_API_NOTE_CACHE_TTL`. Pass `note.NoopCache{}` to disable it. Hit/miss
+metrics are recorded by the Redis adapter rather than by the use cases, so a
+build without a cache reports nothing instead of a permanent 0% hit rate.
 <!-- feat:end -->
 <!-- feat:if rabbitmq -->
 `Create` also publishes a `note.created` event through an `Events` port
