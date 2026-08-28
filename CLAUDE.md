@@ -60,6 +60,11 @@ replace it with your own domains.
 - Log with `logging.From(ctx)`, never `slog.Default()`, inside request handling —
   that is what keeps `request_id` and `user_id` on every line.
 <!-- feat:end -->
+<!-- feat:if frontend,backend -->
+- The dev-server proxy target lives in `services/frontend/config/devProxy.ts`, not
+  in `vite.config.ts`, so it can be tested. Node-side config code belongs under
+  `config/` (typed by `tsconfig.node.json`); `src/` is browser code.
+<!-- feat:end -->
 - Host-side ports live in `env/<env>/ports.env`, not in the compose files.
 - Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) must stay in sync.
 

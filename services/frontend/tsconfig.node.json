@@ -20,5 +20,9 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts"]
+// feat:if backend
+  "include": ["vite.config.ts", "config"]
+// feat:else
+//~   "include": ["vite.config.ts"]
+// feat:end
 }

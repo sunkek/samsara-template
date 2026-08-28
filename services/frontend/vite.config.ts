@@ -1,33 +1,11 @@
-import { defineConfig } from 'vite'
+// defineConfig comes from vitest/config, not vite: it is the same config plus
+// the `test` block below.
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 // feat:if backend
-import fs from 'node:fs'
-import path from 'node:path'
+import { resolveProxyTarget } from './config/devProxy'
 
-// Resolve backend port from env/local/api.env so `npm run dev` works without
-// the Makefile. Falls back to process.env, then 8000.
-function backendPortFromEnvFile(): string | undefined {
-  const envPath = path.resolve(import.meta.dirname, '../../env/local/api.env')
-  try {
-    const text = fs.readFileSync(envPath, 'utf8')
-    const m = text.match(/^\s*(?:export\s+)?MY_PROJECT_API_FIBER_PORT\s*=\s*"?([^"\s]+)"?\s*$/m)
-    return m?.[1]
-  } catch {
-    return undefined
-  }
-}
-
-const backendPort =
-  process.env.MY_PROJECT_API_FIBER_PORT ??
-  backendPortFromEnvFile() ??
-  '8000'
-
-// The SPA always calls a relative /api/v1 base (same origin), so it works
-// unchanged behind the prod nginx proxy. In dev the vite server proxies /api
-// to the backend: localhost for host runs (run-local), or the backend
-// container when the frontend itself runs in Docker (PROXY_TARGET is set).
-const proxyTarget =
-  process.env.MY_PROJECT_API_PROXY_TARGET ?? `http://localhost:${backendPort}`
+const proxyTarget = resolveProxyTarget(import.meta.dirname)
 // feat:end
 
 export default defineConfig({
@@ -42,4 +20,14 @@ export default defineConfig({
     'import.meta.env.VITE_API_BASE': JSON.stringify('/api/v1'),
   },
 // feat:end
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+// feat:if backend
+    include: ['src/**/*.test.{ts,tsx}', 'config/**/*.test.ts'],
+// feat:else
+//~     include: ['src/**/*.test.{ts,tsx}'],
+// feat:end
+  },
 })

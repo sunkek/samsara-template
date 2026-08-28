@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matching and Bearer handling, the per-IP rate limiter, `e.HTTPStatus`
   (exhaustive, now 100%), and the note HTTP handlers driven through the
   adapter's real route table.
+- Frontend test runner: vitest + Testing Library on jsdom, wired into both CI
+  files (`npm test`), with `test:watch` and `test:coverage` scripts.
 - Dependabot config (`gomod`, `npm`, `github-actions`, weekly, grouped).
 - CodeQL workflow (Go + JS/TS, gated on bootstrap).
 - `make help` now lists `gen-env`, `gen-key-hex`, `gen-key-b64`, `ps`, `pull`,

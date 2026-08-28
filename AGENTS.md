@@ -26,8 +26,9 @@ See `CLAUDE.md` for the project overview and the map of the other docs, and
 - Integration tests live in `internal/integration` behind the `integration` build tag, so they are excluded from the default `go test ./...`. Run them with `make test-integration` (needs dev infra up + migrations applied).
 <!-- feat:end -->
 <!-- feat:end -->
-<!-- feat:if frontend,!backend -->
-<!--~ - There is no test runner wired yet; add one (vitest is the natural fit for Vite) when the app grows past static markup. `npm run lint` and `npm run build` are what CI enforces today. -->
+<!-- feat:if frontend -->
+- Frontend tests run on vitest + Testing Library (jsdom): `npm test` (watch: `npm run test:watch`, coverage: `npm run test:coverage`). Tests sit next to the code as `*.test.ts`/`*.test.tsx`.
+- Query rendered output the way a user finds it (`getByRole`, `getByLabelText`), not by test id or class name.
 <!-- feat:end -->
 - CI runs on push/PR (`.github/workflows/ci.yml`, mirrored in `.gitlab-ci.yml`). Keep both CI files in sync.
 <!-- feat:if backend -->

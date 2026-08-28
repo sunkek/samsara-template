@@ -63,6 +63,7 @@ prune frontend \
 
 prune backend \
   services/backend \
+  services/frontend/config \
   env/example/api.env \
   docs
 

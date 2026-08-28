@@ -69,5 +69,6 @@ frontend:
     - cd services/frontend
     - npm install
     - npm run lint
+    - npm test
     - npm run build
 # feat:end
