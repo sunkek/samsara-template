@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the rest of the feature tooling.
 - Dependabot config (`gomod`, `npm`, `github-actions`, weekly, grouped).
 - CodeQL workflow (Go + JS/TS, gated on bootstrap).
+- `make help` now lists `gen-env`, `gen-key-hex`, `gen-key-b64`, `ps`, `pull`,
+  `restart-local` and `restart-local-v`, which it had never mentioned — including
+  `gen-env`, which the first-run sequence depends on.
 - `govulncheck` step in backend CI.
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 

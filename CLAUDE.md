@@ -65,20 +65,6 @@ replace it with your own domains.
 
 ## First run after cloning
 
-```bash
-docker network create dev                    # once
-make gen-env APP=<your_app_name>             # fills env/dev + env/local
-<!-- feat:if backend -->
-cd services/backend && go mod tidy && cd ../..
-<!-- feat:end -->
-<!-- feat:if frontend -->
-cd services/frontend && npm install && cd ../..
-<!-- feat:end -->
-<!-- feat:if postgresql|redis|rabbitmq -->
-make run                                     # start infra
-<!-- feat:end -->
-<!-- feat:if postgresql -->
-make migrate-up
-<!-- feat:end -->
-make run-local
-```
+`README.md` has the setup sequence and both ways to run the stack (host dev
+servers via `make run-local`, or everything in Docker via `make up`). Follow it
+rather than reconstructing the steps.

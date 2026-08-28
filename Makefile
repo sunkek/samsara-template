@@ -46,11 +46,16 @@ COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] &
 
 help:
 	@echo "Targets:"
+	@echo "  make gen-env APP=<name>       - Materialize env/<env>/*.env with fresh secrets"
+	@echo "  make gen-key-hex              - Print a random 32-byte hex secret"
+	@echo "  make gen-key-b64              - Print a random 32-byte base64 secret"
 	@echo "  make up [ENVIRONMENT=dev|stage|prod] - Start full stack in Docker for the environment"
 	@echo "  make down                     - Stop and remove all containers"
 	@echo "  make down-v                   - Stop and remove all containers and volumes"
 	@echo "  make restart                  - down then up"
 	@echo "  make restart-v                - down-v then up"
+	@echo "  make restart-local            - down then run-local"
+	@echo "  make restart-local-v          - down-v then run-local"
 # feat:if postgresql|redis|rabbitmq
 	@echo "  make run                      - Start infra only (docker compose up -d)"
 # feat:end
@@ -65,6 +70,8 @@ help:
 # feat:end
 	@echo "  make stop                     - Stop and remove containers"
 	@echo "  make logs                     - Follow compose logs"
+	@echo "  make ps                       - List compose containers"
+	@echo "  make pull                     - Pull compose images"
 # feat:if backend
 	@echo "  make gen-api-docs             - Regenerate Swagger docs (swag fmt + swag init)"
 # feat:end
