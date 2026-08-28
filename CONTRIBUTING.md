@@ -10,11 +10,12 @@ Thanks for considering a contribution. This template aims to stay small, opinion
 ## Ground rules
 
 - Coding style, testing rules, and commit format live in [`AGENTS.md`](AGENTS.md). Read it first.
+- [`CLAUDE.md`](CLAUDE.md) maps the docs; `make help` lists every command.
 <!-- feat:if backend -->
-- Architecture and command reference live in [`CLAUDE.md`](CLAUDE.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+- Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); compose stacks, env files and hardening in [`infra/OPERATIONS.md`](infra/OPERATIONS.md).
 <!-- feat:end -->
 <!-- feat:if !backend -->
-<!--~ - Architecture and command reference live in [`CLAUDE.md`](CLAUDE.md). -->
+<!--~ - Compose stacks, env files and hardening live in [`infra/OPERATIONS.md`](infra/OPERATIONS.md). -->
 <!-- feat:end -->
 <!-- feat:if postgresql -->
 - The `note` domain is the canonical example of the vertical-slice pattern. New domains should mirror its structure.
@@ -54,10 +55,10 @@ See [`README.md`](README.md) for the Docker-only path (`make up`).
 - If you added a migration, include it in the same commit as the Go code that needs it.
 <!-- feat:end -->
 <!-- feat:if backend -->
-- Update `CLAUDE.md` / `docs/ARCHITECTURE.md` if you changed the architecture or added a cross-cutting convention.
+- Update `docs/ARCHITECTURE.md` if you changed the architecture, and `CLAUDE.md` only if you added a convention no lookup would reveal.
 <!-- feat:end -->
 <!-- feat:if !backend -->
-<!--~ - Update `CLAUDE.md` if you changed the architecture or added a cross-cutting convention. -->
+<!--~ - Update `CLAUDE.md` if you added a convention no lookup would reveal. -->
 <!-- feat:end -->
 - Keep both CI files (`.github/workflows/ci.yml` and `.gitlab-ci.yml`) in sync.
 

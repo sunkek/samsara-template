@@ -44,5 +44,5 @@ upstream), and issues that require a misconfiguration explicitly warned against
 in the docs.
 <!-- feat:if backend -->
 Examples of the latter: running with `CORS_ALLOW_ORIGINS=*` or `SSL_MODE=disable`
-in production — see `CLAUDE.md`.
+in production — see `infra/OPERATIONS.md`.
 <!-- feat:end -->

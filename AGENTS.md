@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-See `CLAUDE.md` for project overview, commands, and architecture.
+See `CLAUDE.md` for the project overview and the map of the other docs.
 
 ## Coding Style
 
@@ -39,28 +39,11 @@ See `CLAUDE.md` for project overview, commands, and architecture.
 <!-- feat:if template -->
 ## Feature markers (template only)
 
-Files carry `feat:if <expr>` / `feat:else` / `feat:end` comments in their own
-comment syntax; `scripts/apply_features.sh` renders them for a chosen feature
-set (`backend`, `frontend`, `postgresql`, `redis`, `rabbitmq`). Rules when
-editing:
-
-- The checked-in template is the **all-features** build and must run as-is. Code
-  that only exists when a feature is *off* lives behind a `~` comment leader
-  (`//~`, `#~`), which the renderer uncomments.
-- Markers are only recognized at the start of a line; mention them mid-sentence
-  in prose freely.
-- Whole files/dirs that belong to one feature are listed in the prune table in
-  `scripts/apply_features.sh` instead of being marked up.
-- Never put a marker **inside** a backslash-continued Make recipe or shell
-  command: the shell joins the lines, so `# feat:if …` comments out the rest of
-  the command in the unrendered template. Gate the variable that feeds the
-  recipe instead (see `LOCAL_INFRA` / `RUN_LOCAL_*` in the `Makefile`).
-- Prefer plain (uncommented) content inside a positively-gated block; the `~`
-  leader is for blocks that are *inactive* in the all-features build, so using
-  it elsewhere hides that content from the template's own readers.
-- Add a combination to the `feature-matrix` CI job when you add a feature.
-- `scripts/features_test.sh` unit-tests the renderer; extend it when you change
-  marker semantics.
+Files carry `feat:if` / `feat:else` / `feat:end` comments that
+`scripts/apply_features.sh` renders for a chosen feature set. Read
+[`docs/FEATURES.md`](docs/FEATURES.md) before editing a marked file or adding a
+feature — the marker rules have sharp edges (line-start only, per-line `~`
+leaders, Make recipes).
 <!-- feat:end -->
 
 ## Commit Format

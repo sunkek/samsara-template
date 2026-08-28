@@ -145,8 +145,8 @@ env                 # per-environment env files (example/ is the template)
 
 (Whatever you deselected at bootstrap time is simply absent.)
 
-See `CLAUDE.md` for commands and architecture, and `AGENTS.md` for
-coding/commit conventions.
+`CLAUDE.md` maps the docs; `AGENTS.md` holds coding and commit conventions;
+`infra/OPERATIONS.md` covers compose stacks, env files and production hardening.
 <!-- feat:if backend -->
 `docs/ARCHITECTURE.md` covers the domain pattern.
 <!-- feat:end -->

@@ -20,7 +20,7 @@ See CONTRIBUTING.md and AGENTS.md for conventions.
 - [ ] Swagger regenerated if API handlers changed (`make gen-api-docs`)
 - [ ] Migration committed alongside the Go code that needs it (if any)
 - [ ] Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) stay in sync
-- [ ] Architecture docs updated if cross-cutting (`CLAUDE.md`, `docs/ARCHITECTURE.md`)
+- [ ] Docs updated where the change lands (`docs/ARCHITECTURE.md`, `infra/OPERATIONS.md`)
 
 ## Notes for reviewers
 

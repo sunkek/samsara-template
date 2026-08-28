@@ -230,7 +230,7 @@ sed -i '/^# The template ships without go\.sum/,/^services\/backend\/go\.sum$/d'
 if [ "$FEATURES" != "$ALL_FEATURES" ] || [ -f scripts/apply_features.sh ]; then
   scripts/apply_features.sh -f "$FEATURES" -C .
 fi
-rm -f scripts/apply_features.sh scripts/features.awk scripts/features_test.sh
+rm -f scripts/apply_features.sh scripts/features.awk scripts/features_test.sh docs/FEATURES.md
 
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
 if [ -n "$VERIFY" ] && [ -d "$TARGET/services/backend" ]; then
