@@ -27,7 +27,7 @@ type DB interface {
 // Revoker is the outbound port for the refresh-token denylist. Revoke marks a
 // token id (jti) as revoked until ttl elapses (set ttl to the token's remaining
 // lifetime so the entry self-expires). IsRevoked reports whether a jti has been
-// revoked. The default implementation is an in-memory no-op; wire the Redis
+// revoked. adapter/memory is a process-local implementation; wire the Redis
 // adapter in production so revocation survives restarts and spans replicas.
 type Revoker interface {
 	Revoke(ctx context.Context, jti string, ttl time.Duration) error

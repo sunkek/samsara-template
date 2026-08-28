@@ -36,6 +36,13 @@ replace it with your own domains.
 - **`docs/FEATURES.md`** — feature-marker syntax and the rules for editing a
   marked file. Read it before editing any file carrying `feat:if` comments.
 <!-- feat:end -->
+- **`CONTEXT.md`** — the glossary. Read it before naming a new type, package or
+  concept, and use its words in code, comments and commits.
+<!-- feat:if backend -->
+- **`docs/adr/`** — why the shape is what it is: feature rendering, domain-owned
+  ports, no-op ports for optional infra, token revocation, hand-written SQL.
+  Read the relevant one before changing any of those.
+<!-- feat:end -->
 - **`AGENTS.md`** — coding style, testing, commit format.
 - **`make help`** — every Make target, always current. Prefer it over asking.
 

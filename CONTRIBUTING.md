@@ -11,6 +11,7 @@ Thanks for considering a contribution. This template aims to stay small, opinion
 
 - Coding style, testing rules, and commit format live in [`AGENTS.md`](AGENTS.md). Read it first.
 - [`CLAUDE.md`](CLAUDE.md) maps the docs; `make help` lists every command.
+- [`CONTEXT.md`](CONTEXT.md) is the glossary. Name things with its words, and extend it when you introduce a concept it does not cover.
 <!-- feat:if backend -->
 - Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); compose stacks, env files and hardening in [`infra/OPERATIONS.md`](infra/OPERATIONS.md).
 <!-- feat:end -->
@@ -56,6 +57,7 @@ See [`README.md`](README.md) for the Docker-only path (`make up`).
 <!-- feat:end -->
 <!-- feat:if backend -->
 - Update `docs/ARCHITECTURE.md` if you changed the architecture, and `CLAUDE.md` only if you added a convention no lookup would reveal.
+- Add an ADR under `docs/adr/` if the change is hard to reverse, surprising without context, and the result of a real trade-off. Otherwise skip it.
 <!-- feat:end -->
 <!-- feat:if !backend -->
 <!--~ - Update `CLAUDE.md` if you added a convention no lookup would reveal. -->

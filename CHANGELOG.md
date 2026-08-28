@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   build`) and covers the frontend-only and no-features combinations.
 - `infra/OPERATIONS.md`: compose stacks, env-file generation and secret sharing,
   host ports, and the production hardening checklist, moved out of `CLAUDE.md`.
+- `CONTEXT.md`: the project glossary, opinionated about which word to use where
+  three different words in this repo mean "a unit of the system" (samsara
+  component, Compose service, backend domain).
+- `docs/adr/`: five architecture decision records covering feature rendering,
+  domain-owned ports, no-op ports for optional infra, refresh-only token
+  revocation, and hand-written SQL.
 - `docs/FEATURES.md`: feature-marker syntax and the rules for editing a marked
   file, moved out of `AGENTS.md`. Removed from forks by `bootstrap.sh` along
   with the rest of the feature tooling.
@@ -30,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- `auth.Revoker`'s doc comment described the default implementation as "an
+  in-memory no-op". There is no no-op revoker: `auth/adapter/memory` is a real
+  process-local denylist, and a no-op there would make logout a lie.
 - CI in a fork rendered without `backend` no longer skips every job: the
   "unbootstrapped template" guard keyed on `services/backend/go.sum`, a file
   such a fork never has, so GitHub CI, GitLab CI and CodeQL short-circuited

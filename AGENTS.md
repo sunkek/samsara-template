@@ -1,6 +1,7 @@
 # Repository Guidelines
 
-See `CLAUDE.md` for the project overview and the map of the other docs.
+See `CLAUDE.md` for the project overview and the map of the other docs, and
+`CONTEXT.md` for the glossary — naming follows it.
 
 ## Coding Style
 
