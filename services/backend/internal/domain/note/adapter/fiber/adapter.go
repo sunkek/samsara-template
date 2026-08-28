@@ -18,13 +18,18 @@ type Adapter struct {
 
 func New(f *fibercmp.Component, svc note.Service) *Adapter {
 	a := &Adapter{svc: svc}
-	f.Register(func(r gf.Router) {
-		g := r.Group("/notes")
-		g.Post("/", a.handleCreate)
-		g.Get("/", a.handleList)
-		g.Get("/:id", a.handleGet)
-	})
+	f.Register(a.routes)
 	return a
+}
+
+// routes is the adapter's route table. It is a method rather than a closure
+// inside New so tests can mount the real routes on a bare router — the
+// component only applies registered funcs when it starts and binds a port.
+func (a *Adapter) routes(r gf.Router) {
+	g := r.Group("/notes")
+	g.Post("/", a.handleCreate)
+	g.Get("/", a.handleList)
+	g.Get("/:id", a.handleGet)
 }
 
 type createReq struct {

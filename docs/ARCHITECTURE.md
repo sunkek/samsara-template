@@ -164,9 +164,14 @@ running outside Docker.
 ## Error handling
 
 `github.com/sunkek/mishap`. Codes live in `internal/common/e/e.go`: `NotFound`,
-`Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`. Wrap with
-`mishap.Wrap(err, "message")`. The Fiber error handler in `cmd/main/main.go`
-maps each code to an HTTP status — a code with no mapping falls through as 500.
+`Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`, `RateLimit`. Wrap with
+`mishap.Wrap(err, "message")`.
+
+`e.HTTPStatus` is the single source of truth for the code-to-status mapping,
+shared by the Fiber error handler in `cmd/main/main.go` and the metrics
+middleware. A code with no case there falls through as 500, which silently turns
+a client error into a server one — so add the case in the same commit as the
+code, and extend the exhaustive table test in `e_test.go`.
 
 ## Correlated logging
 

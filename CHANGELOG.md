@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/FEATURES.md`: feature-marker syntax and the rules for editing a marked
   file, moved out of `AGENTS.md`. Removed from forks by `bootstrap.sh` along
   with the rest of the feature tooling.
+- Tests at four previously uncovered seams: the auth middleware's public-prefix
+  matching and Bearer handling, the per-IP rate limiter, `e.HTTPStatus`
+  (exhaustive, now 100%), and the note HTTP handlers driven through the
+  adapter's real route table.
 - Dependabot config (`gomod`, `npm`, `github-actions`, weekly, grouped).
 - CodeQL workflow (Go + JS/TS, gated on bootstrap).
 - `make help` now lists `gen-env`, `gen-key-hex`, `gen-key-b64`, `ps`, `pull`,
@@ -39,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- `docs/ARCHITECTURE.md` omitted the `RateLimit` error code and attributed the
+  code-to-status mapping to `cmd/main`; it is `e.HTTPStatus`, shared with the
+  metrics middleware.
 - Cache read failures in the `note` domain were discarded (`_`), so a Redis
   outage was silent on the read path while write-path failures logged. Reads now
   log the error and still fall back to the database.
