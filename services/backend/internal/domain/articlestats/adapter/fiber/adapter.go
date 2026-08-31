@@ -26,7 +26,7 @@ func New(f *fibercmp.Component, svc articlestats.Service) *Adapter {
 //	@Tags		stats
 //	@Produce	json
 //	@Security	BearerAuth
-//	@Success	200	{object}	model.Stats
+//	@Success	200	{object}	github_com_sunkek_samsara-template_backend_internal_domain_articlestats_model.Stats
 //	@Router		/stats [get]
 func (a *Adapter) handleGet(ctx gf.Ctx) error {
 	s, err := a.svc.Get(ctx.Context())

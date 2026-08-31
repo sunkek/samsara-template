@@ -171,10 +171,15 @@ gen-key-b64:
 	openssl rand --base64 32
 
 # feat:if backend
+# The search dir is the module root, not cmd/main: the route annotations live on
+# the handlers in internal/domain/*/adapter/fiber, and swag only walks the tree
+# it is pointed at. -g names the file carrying the general API info. JSON+YAML
+# only: the server serves docs/swagger.json as a static file, so the generated
+# docs.go would add a swag import to the module for nothing.
 gen-api-docs:
 	cd ./services/backend && \
-	swag fmt -d ./cmd/main && \
-	swag init -d ./cmd/main -o ./docs --parseInternal --parseDependency --parseDependencyLevel=1
+	swag fmt -d ./cmd/main -d ./internal && \
+	swag init -g cmd/main/main.go -d ./ -o ./docs --outputTypes json,yaml --parseInternal --parseDependency --parseDependencyLevel=1
 
 # feat:end
 

@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- `make gen-api-docs` generated an empty `paths: {}`: swag was pointed at
+  `./cmd/main`, which holds the general API info but none of the route
+  annotations — those live on the handlers in `internal/domain/*/adapter/fiber`,
+  and swag walks only the tree it is given. It now searches the module root with
+  `-g cmd/main/main.go`, and emits JSON+YAML only, since the server serves
+  `docs/swagger.json` as a static file and the generated `docs.go` would pull
+  `swaggo/swag` into the module for nothing.
 - The per-IP auth rate limiter was one shared bucket in the stage and prod
   stacks. Every request arrives through nginx and no proxy trust was configured,
   so `c.IP()` returned nginx's address for all of them: ten login attempts from
