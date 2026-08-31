@@ -110,8 +110,8 @@ cache on a hit and populate it on a miss; `Create` warms the item and
 invalidates the list. Caching is best-effort — a cache error is logged and falls
 back to the DB, never failing the request — and the TTL is
 `MY_PROJECT_API_ARTICLE_CACHE_TTL`. Hit/miss metrics are recorded by the Redis
-adapter rather than by the use cases, so a build without a cache reports nothing
-instead of a permanent 0% hit rate. `Create` also publishes an `article.created`
+adapter rather than by the use cases: whether a lookup hit is a fact about the
+cache, so deleting the adapter takes the metric with it. `Create` also publishes an `article.created`
 event through an `Events` port (`adapter/rabbitmq`) to a topic exchange,
 best-effort.
 

@@ -27,7 +27,8 @@ type DB interface {
 // the domain treats any cache error as a miss and falls back to the DB, so a
 // cache outage never fails a request — but it logs the error, so a cache that
 // is down is visible rather than silent. The bool reports a hit. Hit/miss
-// metrics belong to the implementation, not to this port. The Redis adapter implements it.
+// metrics belong to the implementation, not to this port. The Redis adapter
+// implements it.
 type Cache interface {
 	GetArticle(ctx context.Context, id string) (model.Article, bool, error)
 	SetArticle(ctx context.Context, n model.Article) error
@@ -37,7 +38,8 @@ type Cache interface {
 }
 
 // Events is the outbound port for publishing domain events. It is best-effort:
-// the domain ignores publish errors so a broker outage never fails a write. The RabbitMQ adapter implements it.
+// the domain ignores publish errors so a broker outage never fails a write. The
+// RabbitMQ adapter implements it.
 type Events interface {
 	ArticleCreated(ctx context.Context, n model.Article) error
 }

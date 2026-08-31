@@ -54,7 +54,7 @@ func TestGetCacheHitSkipsDB(t *testing.T) {
 	db := &countingDB{}
 	cache := &stubCache{articleHit: true, article: model.Article{ID: "n1", Title: "cached"}}
 
-	got, err := New(db, cache, nopEvents{}).Get(context.Background(), "n1")
+	got, err := New(db, cache, noopEvents{}).Get(context.Background(), "n1")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestGetCacheMissReadsDBAndPopulates(t *testing.T) {
 	db := &countingDB{article: model.Article{ID: "n1", Title: "fromdb"}}
 	cache := &stubCache{} // miss
 
-	got, err := New(db, cache, nopEvents{}).Get(context.Background(), "n1")
+	got, err := New(db, cache, noopEvents{}).Get(context.Background(), "n1")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestListCacheMissReadsDBAndPopulates(t *testing.T) {
 	db := &countingDB{list: []model.Article{{ID: "n1"}}}
 	cache := &stubCache{}
 
-	got, err := New(db, cache, nopEvents{}).List(context.Background())
+	got, err := New(db, cache, noopEvents{}).List(context.Background())
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestCreateWarmsItemAndInvalidatesList(t *testing.T) {
 	db := &countingDB{}
 	cache := &stubCache{}
 
-	if _, err := New(db, cache, nopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"}); err != nil {
+	if _, err := New(db, cache, noopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"}); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 	if cache.setArticle != 1 {
@@ -123,7 +123,7 @@ func TestCacheReadErrorFallsBackToDB(t *testing.T) {
 
 	t.Run("get", func(t *testing.T) {
 		db := &countingDB{article: model.Article{ID: "n1", Title: "from db"}}
-		d := New(db, &stubCache{getErr: down}, nopEvents{})
+		d := New(db, &stubCache{getErr: down}, noopEvents{})
 
 		got, err := d.Get(context.Background(), "n1")
 		if err != nil {
@@ -139,7 +139,7 @@ func TestCacheReadErrorFallsBackToDB(t *testing.T) {
 
 	t.Run("list", func(t *testing.T) {
 		db := &countingDB{list: []model.Article{{ID: "n1"}}}
-		d := New(db, &stubCache{getErr: down}, nopEvents{})
+		d := New(db, &stubCache{getErr: down}, noopEvents{})
 
 		got, err := d.List(context.Background())
 		if err != nil {
@@ -154,8 +154,8 @@ func TestCacheReadErrorFallsBackToDB(t *testing.T) {
 	})
 }
 
-// nopEvents is a publisher that drops everything: these tests are about the
+// noopEvents is a publisher that drops everything: these tests are about the
 // cache, and a publish failure must never be what makes one of them fail.
-type nopEvents struct{}
+type noopEvents struct{}
 
-func (nopEvents) ArticleCreated(context.Context, model.Article) error { return nil }
+func (noopEvents) ArticleCreated(context.Context, model.Article) error { return nil }

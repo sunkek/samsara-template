@@ -7,8 +7,8 @@ import (
 	"github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 )
 
-// Get returns an article by id, cache-aside: serve from cache on a hit, otherwise
-// read the DB and populate the cache. Cache failures are logged but do not fail
+// Get returns an article by id, cache-aside: serve from cache on a hit,
+// otherwise read the DB and populate the cache. Cache failures are logged but do not fail
 // the request (best-effort).
 func (d *Domain) Get(ctx context.Context, id string) (model.Article, error) {
 	n, ok, err := d.cache.GetArticle(ctx, id)

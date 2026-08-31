@@ -20,9 +20,9 @@ type CreateInput struct {
 	Body  string
 }
 
-// ArticleCreatedEvent is the payload published when an article is created. It is
-// the shared contract between the RabbitMQ publisher and the consumer worker, so
-// it lives in model where both can import it.
+// ArticleCreatedEvent is the payload published when an article is created. It
+// is the shared contract between the RabbitMQ publisher and the consumer
+// worker, so it lives in model where both can import it.
 type ArticleCreatedEvent struct {
 	ArticleID string    `json:"article_id"`
 	Title     string    `json:"title"`

@@ -11,8 +11,8 @@ import (
 	"github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 )
 
-// stubDB is an in-memory article.DB. The Service/DB ports exist precisely so the
-// use cases can be tested without a real database — this is the pattern to copy
+// stubDB is an in-memory article.DB. The Service/DB ports exist precisely so
+// the use cases can be tested without a real database — this is the pattern to copy
 // for your own domains.
 type stubDB struct {
 	inserted  model.Article
@@ -49,7 +49,7 @@ func TestCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := &stubDB{}
-			got, err := New(db, noopCache{}, nopEvents{}).Create(context.Background(), tt.in)
+			got, err := New(db, noopCache{}, noopEvents{}).Create(context.Background(), tt.in)
 			if tt.wantErr != "" {
 				if codeOf(err) != tt.wantErr {
 					t.Fatalf("want code %q, got err %v", tt.wantErr, err)
@@ -74,7 +74,7 @@ func TestCreate(t *testing.T) {
 
 func TestCreatePropagatesDBError(t *testing.T) {
 	dbErr := errors.New("boom")
-	_, err := New(&stubDB{insertErr: dbErr}, noopCache{}, nopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"})
+	_, err := New(&stubDB{insertErr: dbErr}, noopCache{}, noopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"})
 	if !errors.Is(err, dbErr) {
 		t.Fatalf("want wrapped db error, got %v", err)
 	}

@@ -1,5 +1,5 @@
-// Package rabbitmq adapts incoming article.created deliveries to the articlestats
-// projection service. It is the inbound transport for the read model.
+// Package rabbitmq adapts incoming article.created deliveries to the
+// articlestats projection service. It is the inbound transport for the read model.
 package rabbitmq
 
 import (

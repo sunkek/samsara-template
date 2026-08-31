@@ -1,5 +1,5 @@
-// Package postgresql implements the articlestats projection store. The projection
-// is a single row (id = 1) upserted on each article.created event.
+// Package postgresql implements the articlestats projection store. The
+// projection is a single row (id = 1) upserted on each article.created event.
 package postgresql
 
 import (
@@ -22,8 +22,8 @@ func New(pg *pgcmp.Component) *Adapter {
 	return &Adapter{pg: pg}
 }
 
-// RecordArticleCreated increments the counter and records the latest article. The
-// upsert is idempotent against the singleton row.
+// RecordArticleCreated increments the counter and records the latest article.
+// The upsert is idempotent against the singleton row.
 func (a *Adapter) RecordArticleCreated(ctx context.Context, e articlemodel.ArticleCreatedEvent) error {
 	const q = `
 		INSERT INTO article_stats (id, total_count, last_article_id, last_title, updated_at)

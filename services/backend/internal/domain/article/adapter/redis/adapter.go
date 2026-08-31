@@ -1,5 +1,5 @@
-// Package redis implements the article domain's Cache outbound port on top of the
-// samsara Redis component. Values are JSON-encoded. A miss reports
+// Package redis implements the article domain's Cache outbound port on top of
+// the samsara Redis component. Values are JSON-encoded. A miss reports
 // found=false with no error; a Redis or decode failure reports the error, which
 // the domain logs and treats as a miss. Cache hit/miss metrics are recorded
 // here rather than in the domain: whether a lookup hit is a fact about this
