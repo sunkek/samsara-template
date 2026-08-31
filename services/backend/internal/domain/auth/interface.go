@@ -24,12 +24,21 @@ type DB interface {
 	GetUserByID(ctx context.Context, id string) (model.User, error)
 }
 
-// Revoker is the outbound port for the refresh-token denylist. Revoke marks a
-// token id (jti) as revoked until ttl elapses (set ttl to the token's remaining
-// lifetime so the entry self-expires). IsRevoked reports whether a jti has been
-// revoked. adapter/memory is a process-local implementation; wire the Redis
+// Revoker is the outbound port for the refresh-token denylist. A jti is revoked
+// until ttl elapses — pass the token's remaining lifetime so the entry
+// self-expires. adapter/memory is a process-local implementation; wire the Redis
 // adapter in production so revocation survives restarts and spans replicas.
 type Revoker interface {
+	// Claim atomically revokes jti and reports whether this caller was the one
+	// that did it. A second caller presenting the same token gets false.
+	//
+	// Rotation depends on the atomicity: checking and then revoking in two steps
+	// lets two concurrent uses of a stolen refresh token both pass the check and
+	// both mint a valid pair, which is exactly the replay the denylist exists to
+	// stop.
+	Claim(ctx context.Context, jti string, ttl time.Duration) (bool, error)
+	// Revoke marks jti revoked whether or not it already was. Used by logout,
+	// where revoking an already-revoked token is success, not a conflict.
 	Revoke(ctx context.Context, jti string, ttl time.Duration) error
 	IsRevoked(ctx context.Context, jti string) (bool, error)
 }

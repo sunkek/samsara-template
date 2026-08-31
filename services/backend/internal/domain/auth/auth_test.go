@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -53,6 +54,12 @@ func (s *stubRevoker) Revoke(_ context.Context, jti string, _ time.Duration) err
 }
 func (s *stubRevoker) IsRevoked(_ context.Context, jti string) (bool, error) {
 	return s.revoked[jti], nil
+}
+func (s *stubRevoker) Claim(ctx context.Context, jti string, ttl time.Duration) (bool, error) {
+	if s.revoked[jti] {
+		return false, nil
+	}
+	return true, s.Revoke(ctx, jti, ttl)
 }
 
 func codeOf(err error) mishap.Code {
@@ -206,6 +213,80 @@ func TestRegisterRejectsPasswordOverBcryptLimit(t *testing.T) {
 	if codeOf(err) != e.Validation {
 		t.Fatalf("want e.Validation (400) for a 73-byte password, got %v", err)
 	}
+}
+
+// Two concurrent uses of one refresh token must not both mint a pair. This is
+// the property the Revoker's Claim exists for: with a check-then-revoke pair,
+// both callers pass the check before either write lands.
+func TestConcurrentRefreshOfOneTokenYieldsExactlyOneWinner(t *testing.T) {
+	db := &stubDB{byID: map[string]model.User{"u1": {ID: "u1", Email: "a@b.com"}}}
+	d := New(db, newLockingRevoker(), "test-secret", 15*time.Minute, time.Hour)
+
+	toks, _ := d.tok.issue("u1", "a@b.com")
+
+	const racers = 16
+	var wg sync.WaitGroup
+	results := make(chan error, racers)
+	start := make(chan struct{})
+	for range racers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			_, err := d.Refresh(context.Background(), toks.RefreshToken)
+			results <- err
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+
+	won := 0
+	for err := range results {
+		if err == nil {
+			won++
+		}
+	}
+	if won != 1 {
+		t.Fatalf("%d of %d concurrent refreshes succeeded, want exactly 1", won, racers)
+	}
+}
+
+// lockingRevoker is the stub with the atomicity a real adapter provides.
+type lockingRevoker struct {
+	mu      sync.Mutex
+	revoked map[string]bool
+}
+
+func newLockingRevoker() *lockingRevoker {
+	return &lockingRevoker{revoked: map[string]bool{}}
+}
+func (r *lockingRevoker) Claim(_ context.Context, jti string, _ time.Duration) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.revoked[jti] {
+		return false, nil
+	}
+	r.revoked[jti] = true
+	return true, nil
+}
+func (r *lockingRevoker) Revoke(_ context.Context, jti string, _ time.Duration) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.revoked[jti] = true
+	return nil
+}
+
+// IsRevoked models a real store's round-trip latency. That delay is what makes
+// this test meaningful: with a check-then-revoke pair, every racer reads "not
+// revoked" while the first one is still in flight, and they all mint tokens.
+// Only an atomic Claim narrows that to one winner.
+func (r *lockingRevoker) IsRevoked(_ context.Context, jti string) (bool, error) {
+	r.mu.Lock()
+	was := r.revoked[jti]
+	r.mu.Unlock()
+	time.Sleep(20 * time.Millisecond)
+	return was, nil
 }
 
 func TestLogin(t *testing.T) {

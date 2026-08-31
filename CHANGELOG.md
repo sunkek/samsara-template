@@ -51,6 +51,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- The per-IP auth rate limiter was one shared bucket in the stage and prod
+  stacks. Every request arrives through nginx and no proxy trust was configured,
+  so `c.IP()` returned nginx's address for all of them: ten login attempts from
+  anyone locked the whole `/auth` group for everyone, and there was no
+  per-attacker brute-force protection at all. `Fiber.TrustProxy`,
+  `TrustedProxies` and `TrustProxyHeader` are now wired through to samsara and
+  enabled in the stage/prod compose files. nginx now *overwrites*
+  `X-Forwarded-For` rather than appending, because the backend reads the
+  left-most entry and an appending chain would let a client forge it.
+- Refresh-token rotation was not atomic: `IsRevoked` then `Revoke` are two
+  round-trips, so two concurrent uses of a stolen token both passed the check
+  and both minted a valid pair. The `Revoker` port gained `Claim` — Redis
+  `SET NX`, or an insert under the memory adapter's lock — and a concurrency
+  test that fails 16/16 against the old sequence.
+- The `notestats` consumer ran projection writes on `context.Background()` with
+  no deadline, and requeued failures instantly: a database outage became a hot
+  nack/redeliver loop. Writes are now bounded and a failed delivery pauses
+  before returning.
 - A fork rendered without `frontend` shipped a README promising "paired with a
   React/Vite SPA" and telling the reader to run `./bootstrap.sh`, which
   bootstrap had just deleted. The intro is now gated per app shape.

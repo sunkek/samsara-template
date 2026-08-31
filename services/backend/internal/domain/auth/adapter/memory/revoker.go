@@ -23,6 +23,20 @@ func New() *Adapter {
 	return &Adapter{revoked: make(map[string]time.Time), now: time.Now}
 }
 
+// Claim inserts jti only if it is not already denylisted, under the same lock
+// that guards every other access — so two concurrent claims of one token cannot
+// both win.
+func (a *Adapter) Claim(_ context.Context, jti string, ttl time.Duration) (bool, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.sweep()
+	if _, exists := a.revoked[jti]; exists {
+		return false, nil
+	}
+	a.revoked[jti] = a.now().Add(ttl)
+	return true, nil
+}
+
 func (a *Adapter) Revoke(_ context.Context, jti string, ttl time.Duration) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()

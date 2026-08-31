@@ -98,21 +98,48 @@ type Fiber struct {
 	LoggerFormat          string          `envconfig:"LOGGER_FORMAT" default:"{\"time\":\"${time}\",\"ip\":\"${ip}\",\"x-forwarded-for\":\"${reqHeader:X-Forwarded-For}\",\"status\":${status},\"latency\":\"${latency}\",\"method\":\"${method}\",\"path\":\"${path}\",\"error\":\"${error}\"}\n"`
 	EnableSecurityHeaders *bool           `envconfig:"ENABLE_SECURITY_HEADERS"`
 	SwaggerFilePath       string          `envconfig:"SWAGGER_FILE_PATH"`
+
+	// TrustProxy makes c.IP() read TrustProxyHeader instead of the socket peer,
+	// but only when that peer is one of TrustedProxies. Turn it on exactly when
+	// the service sits behind a reverse proxy you control — in this template's
+	// stage/prod stacks it does, behind nginx, which is why every request would
+	// otherwise carry nginx's address and share one rate-limit bucket.
+	//
+	// Leave it off when the service is exposed directly: a client can send its
+	// own X-Forwarded-For, so trusting the header without pinning the peer hands
+	// every caller a free identity.
+	TrustProxy bool `envconfig:"TRUST_PROXY" default:"false"`
+	// TrustedProxies are the immediate peers whose forwarded-for header is
+	// believed, as IPs or CIDRs. Keep it as tight as the deployment allows.
+	TrustedProxies []string `envconfig:"TRUSTED_PROXIES"`
+	// TrustProxyHeader is the header consulted for the client address.
+	//
+	// Fiber reads the LEFT-MOST entry, which is only spoof-safe when a single
+	// proxy OVERWRITES the header. The nginx config in this template sets
+	// X-Forwarded-For to $remote_addr for that reason. If you put another proxy
+	// in front, that chain appends instead, and the left-most entry becomes
+	// attacker-controlled — resolve the client address yourself in that case.
+	TrustProxyHeader string `envconfig:"TRUST_PROXY_HEADER" default:"X-Forwarded-For"`
 }
 
 func (f Fiber) ToSamsaraCfg() fiber.Config {
 	return fiber.Config{
-		Host:                  f.Host,
-		Port:                  f.Port,
-		PathPrefix:            f.PathPrefix,
-		BodyLimitMB:           f.BodyLimitMB,
-		CORSAllowOrigins:      f.CORSAllowOrigins,
-		CORSAllowMethods:      f.CORSAllowMethods,
-		CORSAllowHeaders:      f.CORSAllowHeaders,
-		ReadTimeout:           f.ReadTimeout,
-		WriteTimeout:          f.WriteTimeout,
-		IdleTimeout:           f.IdleTimeout,
-		ErrorHandler:          f.ErrorHandler,
+		Host:             f.Host,
+		Port:             f.Port,
+		PathPrefix:       f.PathPrefix,
+		BodyLimitMB:      f.BodyLimitMB,
+		CORSAllowOrigins: f.CORSAllowOrigins,
+		CORSAllowMethods: f.CORSAllowMethods,
+		CORSAllowHeaders: f.CORSAllowHeaders,
+		ReadTimeout:      f.ReadTimeout,
+		WriteTimeout:     f.WriteTimeout,
+		IdleTimeout:      f.IdleTimeout,
+		ErrorHandler:     f.ErrorHandler,
+		TrustProxy:       f.TrustProxy,
+		TrustProxyConfig: gf.TrustProxyConfig{Proxies: f.TrustedProxies},
+		ProxyHeader:      f.TrustProxyHeader,
+		// Skip malformed entries rather than treating them as a client address.
+		EnableIPValidation:    true,
 		LoggerFormat:          f.LoggerFormat,
 		EnableSecurityHeaders: f.EnableSecurityHeaders,
 	}

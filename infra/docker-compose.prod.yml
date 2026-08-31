@@ -19,6 +19,16 @@ services:
     build:
       context: ../services/backend
       dockerfile: .docker/Dockerfile.prod
+    environment:
+      # The backend is not published here — every request arrives through the
+      # frontend's nginx. Without proxy trust, c.IP() is nginx's address for all
+      # of them, so the per-IP rate limiter degrades into one shared bucket and
+      # a single caller can lock every user out of /auth. nginx overwrites
+      # X-Forwarded-For (see services/frontend/.docker/nginx.conf), which is what
+      # makes reading it safe.
+      MY_PROJECT_API_FIBER_TRUST_PROXY: "true"
+      # The compose bridge network. Narrow it if you know the subnet exactly.
+      MY_PROJECT_API_FIBER_TRUSTED_PROXIES: "172.16.0.0/12"
     healthcheck:
       # Scratch image has no shell/curl; the prod build ships a /health binary.
       test: ["CMD", "/health"]

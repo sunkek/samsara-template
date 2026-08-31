@@ -60,6 +60,18 @@ In `env/<stage|prod>/api.env`:
   logout) is throttled per-IP by an in-memory limiter
   (`internal/common/middleware`), which is per-process. With more than one
   backend replica, move the counter to a shared store (Redis is already wired).
+- **Proxy trust must match the topology.** The limiter keys on `c.IP()`, which
+  is the socket peer unless `MY_PROJECT_API_FIBER_TRUST_PROXY` is on. In the
+  stage and prod stacks every request arrives through the frontend's nginx, so
+  with trust off all clients share nginx's address: one bucket for everybody,
+  and a single caller can lock the whole `/auth` group. The stage and prod
+  compose files therefore set `TRUST_PROXY=true` with
+  `TRUSTED_PROXIES=172.16.0.0/12`. Leave it **off** wherever the service is
+  reachable directly — trusting the header without pinning the peer lets any
+  caller pick its own identity. Narrow `TRUSTED_PROXIES` to your real subnet,
+  and note that nginx must *overwrite* `X-Forwarded-For` (it does here): the
+  backend reads the left-most entry, so an appending chain would let a client
+  forge the value.
 - **`/metrics` is public** — it is in the auth middleware's public-prefix list in
   `cmd/main/main.go`, so Prometheus can scrape it without a token. That exposes
   request paths, volumes and error rates to anyone who can reach the port. Keep

@@ -129,7 +129,12 @@ public prefixes (`/auth`, `/docs`, `/metrics`). Read verified claims with
 `MY_PROJECT_API_JWT_SECRET`; passwords are bcrypt-hashed.
 
 Refresh tokens are revocable: `POST /auth/logout` denylists one, and
-`/auth/refresh` rotates (single-use) the token presented. Revocation is backed
+`/auth/refresh` rotates (single-use) the token presented. The rotation is one
+atomic `Claim` on the `Revoker` port — Redis `SET NX`, or an insert under the
+memory adapter's lock — so two concurrent presentations of a stolen token yield
+exactly one winner. Checking and then revoking in two steps would let both pass
+the check before either write landed, which is the replay the denylist exists to
+prevent. Revocation is backed
 by the required `Revoker` port —
 <!-- feat:if redis -->
 the Redis adapter (`adapter/redis`) is the production wiring,

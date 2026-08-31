@@ -19,22 +19,24 @@ func (d *Domain) Refresh(ctx context.Context, refreshToken string) (model.Tokens
 	if err != nil {
 		return model.Tokens{}, err
 	}
-	revoked, err := d.revoker.IsRevoked(ctx, claims.ID)
-	if err != nil {
-		return model.Tokens{}, mishap.Wrap(err, "check token revocation")
+	// Rotate first, and atomically: Claim both checks the denylist and adds to
+	// it in one operation, so of two concurrent presentations of the same token
+	// exactly one proceeds. Doing this before the user lookup also means a
+	// replay cannot be timed against a slow database read.
+	ttl := time.Until(claims.ExpiresAt)
+	if ttl <= 0 {
+		return model.Tokens{}, mishap.New("refresh token expired", e.JWT)
 	}
-	if revoked {
-		return model.Tokens{}, mishap.New("refresh token revoked", e.JWT)
+	claimed, err := d.revoker.Claim(ctx, claims.ID, ttl)
+	if err != nil {
+		return model.Tokens{}, mishap.Wrap(err, "claim refresh token")
+	}
+	if !claimed {
+		return model.Tokens{}, mishap.New("refresh token already used or revoked", e.JWT)
 	}
 	u, err := d.db.GetUserByID(ctx, claims.UserID)
 	if err != nil {
 		return model.Tokens{}, mishap.New("invalid refresh token", e.JWT)
-	}
-	// Rotate: revoke the presented token so it is single-use.
-	if ttl := time.Until(claims.ExpiresAt); ttl > 0 {
-		if err := d.revoker.Revoke(ctx, claims.ID, ttl); err != nil {
-			return model.Tokens{}, mishap.Wrap(err, "revoke rotated token")
-		}
 	}
 	return d.tok.issue(u.ID, u.Email)
 }

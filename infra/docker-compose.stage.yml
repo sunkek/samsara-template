@@ -14,6 +14,11 @@ services:
     build:
       context: ../services/backend
       dockerfile: .docker/Dockerfile.prod
+    environment:
+      # Same topology as prod: requests arrive through the frontend's nginx, so
+      # without proxy trust the per-IP rate limiter sees only nginx.
+      MY_PROJECT_API_FIBER_TRUST_PROXY: "true"
+      MY_PROJECT_API_FIBER_TRUSTED_PROXIES: "172.16.0.0/12"
     healthcheck:
       test: ["CMD", "/health"]
       interval: 10s
