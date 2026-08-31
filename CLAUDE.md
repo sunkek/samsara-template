@@ -4,22 +4,14 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this is
 
-<!-- feat:if backend,frontend -->
-My Project is a backend + frontend scaffold: a Go service on the `samsara`
-component supervisor, plus a React/Vite SPA.
-<!-- feat:end -->
-<!-- feat:if backend,!frontend -->
-<!--~ My Project is a Go service built on the `samsara` component supervisor. -->
-<!-- feat:end -->
-<!-- feat:if frontend,!backend -->
-<!--~ My Project is a React/Vite single-page app with its Docker, compose and CI wiring in place. -->
-<!-- feat:end -->
-<!-- feat:if !backend,!frontend -->
-<!--~ My Project is an infrastructure-only scaffold: compose stacks, env generation and CI, with no application service yet. Add yours under `services/`. -->
-<!-- feat:end -->
+My Project is built on the `samsara` component supervisor. Which pieces it has —
+Go backend, React/Vite SPA, Postgres, Redis, RabbitMQ — you can read off
+`services/` and `infra/` faster than this file could tell you, and unlike this
+file they cannot go stale.
+
 <!-- feat:if postgresql -->
-It ships one sample domain (`note`) demonstrating the full vertical slice;
-replace it with your own domains.
+The sample domains (`note`, `auth`) demonstrate the full vertical slice. Replace
+them with your own; they exist to be read and then deleted.
 <!-- feat:end -->
 
 ## Where things are documented
@@ -40,8 +32,8 @@ replace it with your own domains.
   concept, and use its words in code, comments and commits.
 <!-- feat:if backend -->
 - **`docs/adr/`** — why the shape is what it is: feature rendering, domain-owned
-  ports, no-op ports for optional infra, token revocation, hand-written SQL.
-  Read the relevant one before changing any of those.
+  ports, optional infra, token revocation, hand-written SQL, and the sample-domain
+  split. Read the relevant one before changing any of those.
 <!-- feat:end -->
 - **`AGENTS.md`** — coding style, testing, commit format.
 - **`make help`** — every Make target, always current. Prefer it over asking.

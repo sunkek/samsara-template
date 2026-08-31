@@ -107,6 +107,11 @@ jobs:
   # Template-maintenance job: proves every feature combination still renders and
   # builds. The `template` feature is never selected by apply_features.sh, so
   # this job exists only in the template and disappears from every fork.
+  #
+  # The matrix is EXHAUSTIVE — all 2^5 combinations — deliberately. A curated
+  # subset leaves the untested ones to break silently, and a fork only finds out
+  # after it has been created. Generate the list with:
+  #   python3 -c 'from itertools import combinations as c; f="backend frontend postgresql redis rabbitmq".split(); print("\n".join(sorted(",".join(x) for r in range(6) for x in c(f,r))))'
   feature-matrix:
     needs: feature-renderer
     runs-on: ubuntu-latest
@@ -114,15 +119,38 @@ jobs:
       fail-fast: false
       matrix:
         features:
-          - backend,frontend,postgresql,redis,rabbitmq
-          - backend,postgresql,redis,rabbitmq
-          - backend,frontend,postgresql
-          - backend,postgresql,redis
-          - backend,postgresql,rabbitmq
-          - backend
-          - frontend
-          - frontend,postgresql
           - ""
+          - "backend"
+          - "frontend"
+          - "postgresql"
+          - "redis"
+          - "rabbitmq"
+          - "backend,frontend"
+          - "backend,postgresql"
+          - "backend,redis"
+          - "backend,rabbitmq"
+          - "frontend,postgresql"
+          - "frontend,redis"
+          - "frontend,rabbitmq"
+          - "postgresql,redis"
+          - "postgresql,rabbitmq"
+          - "redis,rabbitmq"
+          - "backend,frontend,postgresql"
+          - "backend,frontend,redis"
+          - "backend,frontend,rabbitmq"
+          - "backend,postgresql,redis"
+          - "backend,postgresql,rabbitmq"
+          - "backend,redis,rabbitmq"
+          - "frontend,postgresql,redis"
+          - "frontend,postgresql,rabbitmq"
+          - "frontend,redis,rabbitmq"
+          - "postgresql,redis,rabbitmq"
+          - "backend,frontend,postgresql,redis"
+          - "backend,frontend,postgresql,rabbitmq"
+          - "backend,frontend,redis,rabbitmq"
+          - "backend,postgresql,redis,rabbitmq"
+          - "frontend,postgresql,redis,rabbitmq"
+          - "backend,frontend,postgresql,redis,rabbitmq"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -143,8 +171,18 @@ jobs:
           # so the marker syntax in its own source does not count as a leftover.
           rm -f /tmp/render/app/scripts/apply_features.sh /tmp/render/app/scripts/features.awk \
                 /tmp/render/app/scripts/features_test.sh
-          if grep -rnE "feat:(if|else|end)" /tmp/render/app --exclude-dir=.git; then
+          # Match the renderer's own rule: markers are recognised only at the
+          # start of a line. Prose that mentions `feat:if` mid-sentence (the
+          # marker docs, ADR 0001) is not a leftover marker and must not fail.
+          if grep -rnE "^[[:space:]]*(//|#|--|<!--|;)?[[:space:]]*feat:(if|else|end)" \
+               /tmp/render/app --exclude-dir=.git; then
             echo "unrendered feature markers survived"; exit 1
+          fi
+          # The `~` leader must never survive either: it means a block that
+          # should have been uncommented was left inert.
+          if grep -rnE "^[[:space:]]*(//~|#~|<!--~|--~|;~)([[:space:]]|$)" \
+               /tmp/render/app --exclude-dir=.git --exclude=FEATURES.md; then
+            echo "inert ~-leader lines survived"; exit 1
           fi
       - name: backend builds
         run: |

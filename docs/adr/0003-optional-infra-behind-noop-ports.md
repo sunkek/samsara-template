@@ -1,3 +1,7 @@
+---
+status: accepted — partially revisited by ADR 0006
+---
+
 # Optional infrastructure is a port with a no-op implementation, never a nil check
 
 Redis and RabbitMQ are optional in a fork, so the domains that use them declare
@@ -19,3 +23,8 @@ event publication — and never one whose absence changes a result.
 `auth.Revoker` is the port that fails that test, which is why it has no no-op:
 its Redis-less stand-in, `auth/adapter/memory`, is a working process-local
 denylist. See ADR 0004.
+
+ADR 0006 revisits the shipping side of this: once the domain demonstrating
+optional infra is pruned along with its infra, there is no call site left for a
+no-op to keep unguarded. The wiring claim — optionality lives at the composition
+root, not in the domain logic — is unaffected.

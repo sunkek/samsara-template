@@ -12,57 +12,38 @@ Thanks for considering a contribution. This template aims to stay small, opinion
 - Coding style, testing rules, and commit format live in [`AGENTS.md`](AGENTS.md). Read it first.
 - [`CLAUDE.md`](CLAUDE.md) maps the docs; `make help` lists every command.
 - [`CONTEXT.md`](CONTEXT.md) is the glossary. Name things with its words, and extend it when you introduce a concept it does not cover.
+- Compose stacks, env files and production hardening live in [`infra/OPERATIONS.md`](infra/OPERATIONS.md).
 <!-- feat:if backend -->
-- Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); compose stacks, env files and hardening in [`infra/OPERATIONS.md`](infra/OPERATIONS.md).
-<!-- feat:end -->
-<!-- feat:if !backend -->
-<!--~ - Compose stacks, env files and hardening live in [`infra/OPERATIONS.md`](infra/OPERATIONS.md). -->
-<!-- feat:end -->
-<!-- feat:if postgresql -->
-- The `note` domain is the canonical example of the vertical-slice pattern. New domains should mirror its structure.
+- Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the reasoning behind its shape in [`docs/adr/`](docs/adr/). The `note` domain is the canonical vertical slice; new domains mirror it.
 <!-- feat:end -->
 
 ## Getting set up
 
-- `docker network create dev` (once)
-- `make gen-env APP=<your-app-name>`
-<!-- feat:if backend -->
-- `cd services/backend && go mod tidy`
-<!-- feat:end -->
-<!-- feat:if frontend -->
-- `cd services/frontend && npm install`
-<!-- feat:end -->
-<!-- feat:if postgresql -->
-- `make run && make migrate-up && make run-local`
-<!-- feat:end -->
-<!-- feat:if !postgresql -->
-<!--~ - `make run-local` -->
-<!-- feat:end -->
-
-See [`README.md`](README.md) for the Docker-only path (`make up`).
+Follow the quick start in [`README.md`](README.md) — it has the host-dev path
+(`make run-local`) and the all-in-Docker path (`make up`), and it stays correct
+for whichever pieces this project was built with.
 
 ## Before you open a PR
 
+Everything CI enforces, run locally first. The CI definitions
+(`.github/workflows/ci.yml` and `.gitlab-ci.yml`) are the authority on what that
+is, and the two must stay in sync.
+
 <!-- feat:if backend -->
 - `cd services/backend && gofmt -l . && go vet ./... && go test ./...` — all clean.
+- If you touched API handlers, regenerate Swagger: `make gen-api-docs`.
+- Update `docs/ARCHITECTURE.md` if you changed the architecture, and `CLAUDE.md` only if you added a convention no lookup would reveal.
+- Add an ADR under `docs/adr/` if the change is hard to reverse, surprising without context, and the result of a real trade-off. Otherwise skip it.
 <!-- feat:end -->
 <!-- feat:if frontend -->
-- `cd services/frontend && npm run lint && npm run build` — all clean.
-<!-- feat:end -->
-<!-- feat:if backend -->
-- If you touched API handlers, regenerate Swagger: `make gen-api-docs`.
+- `cd services/frontend && npm run lint && npm test && npm run build` — all clean.
 <!-- feat:end -->
 <!-- feat:if postgresql -->
 - If you added a migration, include it in the same commit as the Go code that needs it.
 <!-- feat:end -->
-<!-- feat:if backend -->
-- Update `docs/ARCHITECTURE.md` if you changed the architecture, and `CLAUDE.md` only if you added a convention no lookup would reveal.
-- Add an ADR under `docs/adr/` if the change is hard to reverse, surprising without context, and the result of a real trade-off. Otherwise skip it.
-<!-- feat:end -->
 <!-- feat:if !backend -->
 <!--~ - Update `CLAUDE.md` if you added a convention no lookup would reveal. -->
 <!-- feat:end -->
-- Keep both CI files (`.github/workflows/ci.yml` and `.gitlab-ci.yml`) in sync.
 
 <!-- feat:if template -->
 ## Scope of changes welcome

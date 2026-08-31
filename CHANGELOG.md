@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adapter's real route table.
 - Frontend test runner: vitest + Testing Library on jsdom, wired into both CI
   files (`npm test`), with `test:watch` and `test:coverage` scripts.
+- `POST-FORK.md`: `apply_features.sh` now names the documents whose prose this
+  feature set cut, so a fork owner reviews those rather than re-reading
+  everything. The baseline is the all-features render, so the template-only
+  sections every fork loses are not reported as work.
+- ADR 0006: three sample domains, one lesson each, and optional infra deleting
+  its demo rather than degrading it.
 - Dependabot config (`gomod`, `npm`, `github-actions`, weekly, grouped).
 - CodeQL workflow (Go + JS/TS, gated on bootstrap).
 - `make help` now lists `gen-env`, `gen-key-hex`, `gen-key-b64`, `ps`, `pull`,
@@ -45,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- The `feature-matrix` "no markers left" check matched `feat:if` anywhere in a
+  line, so prose documenting the marker syntax (`docs/FEATURES.md`, ADR 0001)
+  would have failed CI. It now matches the renderer's own rule — line start
+  only — and also rejects surviving inert `~` leaders.
+- Removed `services/backend/CONTEXT.md`, a stray duplicate of the root glossary
+  committed by mistake.
 - `docs/ARCHITECTURE.md` omitted the `RateLimit` error code and attributed the
   code-to-status mapping to `cmd/main`; it is `e.HTTPStatus`, shared with the
   metrics middleware.
@@ -66,6 +78,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   app service is selected (an empty `jobs:` is not a valid workflow).
 
 ### Changed
+- `feature-matrix` CI now covers all 32 feature combinations rather than a
+  curated nine. A curated subset leaves the rest to break silently, and a fork
+  only finds out after it has been created.
+- Consolidated feature-gated prose: `CONTRIBUTING.md` 32 marker lines to 16 and
+  `CLAUDE.md` 20 to 12, by pointing at the one authoritative place instead of
+  restating per-feature variants. `CLAUDE.md` no longer describes which pieces
+  the build has — that is readable off `services/` and `infra/`, and cannot go
+  stale there.
 - Restructured the agent-facing docs so each fact has one home: `CLAUDE.md`
   drops from 179 to 77 lines, replacing its command reference (a stale-able copy
   of `make help`) and its duplicated architecture prose with pointers that state

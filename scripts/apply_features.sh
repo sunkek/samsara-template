@@ -32,6 +32,11 @@ cd "$TARGET"
 
 has() { case ",$FEATS," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
 
+# Every real feature. Used as the baseline the post-fork doc report diffs
+# against, so a fork is told about prose this feature set cut — not about the
+# template-only sections every fork loses.
+ALL_FEATURES="backend,frontend,postgresql,redis,rabbitmq"
+
 # --- Dependency rules ---------------------------------------------------------
 # The sample domains are Postgres-backed; without it there is nothing to serve,
 # so the backend degrades to a bare supervisor + fiber skeleton. Redis/RabbitMQ
@@ -109,6 +114,10 @@ fi
 # --- Pass 2: render -----------------------------------------------------------
 echo "Rendering feature markers..."
 rendered=0
+# Documents whose rendered text actually changed. A fork owner cannot be told to
+# "review the docs" usefully — they need the list of files whose prose was cut
+# down, which is exactly what this pass knows.
+changed_docs=""
 while IFS= read -r -d '' file; do
   grep -qI . "$file" 2>/dev/null || continue          # skip binaries
   grep -qE '^[[:space:]]*(//|#|--|<!--|;)?[[:space:]]*feat:if[[:space:]]' "$file" || continue
@@ -118,6 +127,17 @@ while IFS= read -r -d '' file; do
     rm -f "$tmp"
     exit 1
   fi
+  case "$file" in
+    *.md)
+      # Report a document only when THIS feature set cut prose from it. The
+      # baseline is the all-features render, not the source: every fork loses the
+      # `template` sections, and pointing at those is noise, not a to-do.
+      if ! awk -v feats="$ALL_FEATURES" -f "$AWK_FILE" "$file" 2>/dev/null \
+        | diff -q - "$tmp" >/dev/null 2>&1; then
+        changed_docs="$changed_docs ${file#./}"
+      fi
+      ;;
+  esac
   # Preserve the executable bit; awk output starts fresh.
   [ -x "$file" ] && chmod +x "$tmp"
   mv "$tmp" "$file"
@@ -132,6 +152,25 @@ done < <(find . -type f \
   -not -name 'features_test.sh' \
   -print0)
 echo "  rendered $rendered file(s)"
+
+# Post-fork report: name the documents whose prose was cut, so the owner reviews
+# those rather than re-reading everything. Written to a file as well as stdout —
+# bootstrap output scrolls past, and this is a to-do, not a log line.
+if [ -n "$changed_docs" ]; then
+  {
+    echo "# Post-fork check"
+    echo
+    echo "\`apply_features.sh -f $FEATS\` cut feature-specific prose out of these"
+    echo "documents. Read each one and confirm it describes the project you now have,"
+    echo "then delete this file."
+    echo
+    for d in $changed_docs; do echo "- \`$d\`"; done
+  } > POST-FORK.md
+  echo
+  echo "Docs rendered for this feature set — review them:"
+  for d in $changed_docs; do echo "  $d"; done
+  echo "  (also written to POST-FORK.md)"
+fi
 
 # Stripping marker comments leaves Go struct-tag alignment and blank lines that
 # gofmt would reflow; normalize so the fork starts gofmt-clean.
