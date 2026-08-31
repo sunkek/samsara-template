@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `make check-api-docs`, run in both CI files: regenerates the Swagger spec into
+  a temp dir and fails if it differs from the committed one. The spec is
+  committed because `Dockerfile.prod` copies `services/backend/docs` into the
+  image, which makes it the kind of generated file that goes stale silently.
 - Feature selection: `bootstrap.sh -F <features>` (and `scripts/apply_features.sh`)
   cuts a fork down to any subset of `backend`, `frontend`, `postgresql`, `redis`,
   `rabbitmq`, deleting the adapters, compose services, env vars, migrations, docs

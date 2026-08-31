@@ -31,7 +31,9 @@ is, and the two must stay in sync.
 
 <!-- feat:if backend -->
 - `cd services/backend && gofmt -l . && go vet ./... && go test ./...` — all clean.
-- If you touched API handlers, regenerate Swagger: `make gen-api-docs`.
+- If you touched API handlers, regenerate Swagger: `make gen-api-docs`, and commit
+  `services/backend/docs/` with the change — CI fails if the committed spec is
+  stale (`make check-api-docs`).
 - Update `docs/ARCHITECTURE.md` if you changed the architecture, and `CLAUDE.md` only if you added a convention no lookup would reveal.
 - Add an ADR under `docs/adr/` if the change is hard to reverse, surprising without context, and the result of a real trade-off. Otherwise skip it.
 <!-- feat:end -->

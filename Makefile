@@ -34,7 +34,7 @@ COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] &
 	up down down-v restart restart-v restart-local restart-local-v \
 	run run-local stop logs ps pull
 # feat:if backend
-.PHONY: gen-api-docs
+.PHONY: gen-api-docs check-api-docs
 # feat:end
 # feat:if postgresql
 .PHONY: psql psql-admin migrate-new migrate-up migrate-down migrate-force \
@@ -74,6 +74,7 @@ help:
 	@echo "  make pull                     - Pull compose images"
 # feat:if backend
 	@echo "  make gen-api-docs             - Regenerate Swagger docs (swag fmt + swag init)"
+	@echo "  make check-api-docs           - Fail if the committed Swagger docs are stale"
 # feat:end
 # feat:if postgresql
 	@echo "  make psql                     - Open psql as APP_USER"
@@ -171,6 +172,9 @@ gen-key-b64:
 	openssl rand --base64 32
 
 # feat:if backend
+# Shared by gen-api-docs and check-api-docs so the two can never drift.
+SWAG_FLAGS := --outputTypes json,yaml --parseInternal --parseDependency --parseDependencyLevel=1
+
 # The search dir is the module root, not cmd/main: the route annotations live on
 # the handlers in internal/domain/*/adapter/fiber, and swag only walks the tree
 # it is pointed at. -g names the file carrying the general API info. JSON+YAML
@@ -179,7 +183,23 @@ gen-key-b64:
 gen-api-docs:
 	cd ./services/backend && \
 	swag fmt -d ./cmd/main -d ./internal && \
-	swag init -g cmd/main/main.go -d ./ -o ./docs --outputTypes json,yaml --parseInternal --parseDependency --parseDependencyLevel=1
+	swag init -g cmd/main/main.go -d ./ -o ./docs $(SWAG_FLAGS)
+
+# The spec is committed (Dockerfile.prod copies ./docs into the image), so it can
+# go stale the moment a handler annotation changes. CI runs this; it regenerates
+# into a temp dir and fails if the result differs from what is checked in.
+check-api-docs:
+	@cd ./services/backend && \
+	tmp="$$(mktemp -d)" && \
+	trap 'rm -rf "$$tmp"' EXIT && \
+	swag init -g cmd/main/main.go -d ./ -o "$$tmp" $(SWAG_FLAGS) >/dev/null && \
+	if ! diff -q "$$tmp/swagger.json" ./docs/swagger.json >/dev/null 2>&1 || \
+	   ! diff -q "$$tmp/swagger.yaml" ./docs/swagger.yaml >/dev/null 2>&1; then \
+	  echo "services/backend/docs is stale — run 'make gen-api-docs' and commit the result." >&2; \
+	  diff -u ./docs/swagger.json "$$tmp/swagger.json" | head -40 >&2; \
+	  exit 1; \
+	fi; \
+	echo "swagger docs are up to date"
 
 # feat:end
 

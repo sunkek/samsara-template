@@ -63,6 +63,15 @@ jobs:
         run: go build ./cmd/main
       - name: test
         run: go test ./...
+      # The Swagger spec is committed (Dockerfile.prod copies it into the image),
+      # so it can go stale the moment a handler annotation changes. Pin swag to
+      # the version the Makefile documents; a different one reformats the spec
+      # and the diff becomes noise.
+      - name: swagger docs are current
+        working-directory: .
+        run: |
+          go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0
+          make check-api-docs
       - name: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest

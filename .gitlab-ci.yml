@@ -48,6 +48,14 @@ backend:
     - go vet ./...
     - go build ./cmd/main
     - go test ./...
+    # Mirrors the "swagger docs are current" step in .github/workflows/ci.yml.
+    # The spec is committed (Dockerfile.prod copies it into the image), so a
+    # changed handler annotation must be regenerated and committed with it.
+    - cd "$CI_PROJECT_DIR"
+    - go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0
+    # GOPATH is redirected into the cache dir above, so its bin/ is not on PATH.
+    - PATH="$GOPATH/bin:$PATH" make check-api-docs
+    - cd services/backend
     # Mirrors the govulncheck step in .github/workflows/ci.yml.
     - go install golang.org/x/vuln/cmd/govulncheck@latest
     - govulncheck ./...
