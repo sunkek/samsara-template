@@ -10,8 +10,8 @@ Go backend, React/Vite SPA, Postgres, Redis, RabbitMQ — you can read off
 file they cannot go stale.
 
 <!-- feat:if postgresql -->
-The sample domains (`note`, `auth`) demonstrate the full vertical slice. Replace
-them with your own; they exist to be read and then deleted.
+The domains under `internal/domain/` are samples demonstrating the vertical
+slice. Replace them with your own; they exist to be read and then deleted.
 <!-- feat:end -->
 
 ## Where things are documented
@@ -58,7 +58,10 @@ them with your own; they exist to be read and then deleted.
   `config/` (typed by `tsconfig.node.json`); `src/` is browser code.
 <!-- feat:end -->
 - Host-side ports live in `env/<env>/ports.env`, not in the compose files.
-- Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) must stay in sync.
+- Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) must stay in sync
+  on what they check. The template-maintenance jobs (`feature-renderer`,
+  `feature-matrix`, CodeQL) are the exception: they exist on GitHub only, because
+  the template itself is hosted there.
 
 ## First run after cloning
 

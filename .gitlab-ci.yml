@@ -26,6 +26,8 @@ stages:
 # feat:if backend
 backend:
   stage: test
+  # Pinned by hand: GitLab has no equivalent of setup-go's go-version-file, so
+  # this must be bumped alongside the `go` directive in services/backend/go.mod.
   image: golang:1.26.4
   cache:
     key:
@@ -46,6 +48,9 @@ backend:
     - go vet ./...
     - go build ./cmd/main
     - go test ./...
+    # Mirrors the govulncheck step in .github/workflows/ci.yml.
+    - go install golang.org/x/vuln/cmd/govulncheck@latest
+    - govulncheck ./...
 
 backend-lint:
   stage: test
@@ -60,14 +65,14 @@ backend-lint:
 # feat:if frontend
 frontend:
   stage: test
-  image: node:22
-  # Uses `npm install` (not `npm ci`) so CI works before a lockfile is
-  # committed. Once you commit package-lock.json, switch to `npm ci` and cache
-  # node_modules keyed on the lockfile for faster, reproducible installs.
+  image: node:26
   script:
     - *template-guard
     - cd services/frontend
-    - npm install
+    # `npm ci` (not `npm install`): package-lock.json is committed, and ci fails
+    # on lockfile drift instead of silently resolving past it. Keep this in step
+    # with the same install in .github/workflows/ci.yml.
+    - npm ci
     - npm run lint
     - npm test
     - npm run build

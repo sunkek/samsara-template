@@ -17,6 +17,11 @@ import (
 // minPasswordLen is a floor, not a policy — tune to your security needs.
 const minPasswordLen = 8
 
+// maxPasswordBytes is bcrypt's hard limit: GenerateFromPassword rejects inputs
+// longer than 72 bytes. Checking it here makes a long passphrase a 400 rather
+// than the 500 an unwrapped bcrypt.ErrPasswordTooLong would produce.
+const maxPasswordBytes = 72
+
 func (d *Domain) Register(ctx context.Context, in model.RegisterInput) (model.User, error) {
 	email := strings.TrimSpace(strings.ToLower(in.Email))
 	if email == "" {
@@ -24,6 +29,9 @@ func (d *Domain) Register(ctx context.Context, in model.RegisterInput) (model.Us
 	}
 	if utf8.RuneCountInString(in.Password) < minPasswordLen {
 		return model.User{}, mishap.New("password too short", e.Validation)
+	}
+	if len(in.Password) > maxPasswordBytes {
+		return model.User{}, mishap.New("password too long", e.Validation)
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)

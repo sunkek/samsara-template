@@ -124,7 +124,7 @@ publish, broker, consumer, projection, `/stats`.
 `internal/domain/auth` is a full sample auth domain: register, login, refresh,
 logout, and JWT verify. Its fiber adapter exposes `Middleware(publicPrefixes...)`,
 registered in `cmd/main` via `fiberCmp.Use(...)` to guard every route except the
-public prefixes (`/auth`, `/docs`). Read verified claims with
+public prefixes (`/auth`, `/docs`, `/metrics`). Read verified claims with
 `authfiber.ClaimsFromContext`. Tokens are HS256 signed with
 `MY_PROJECT_API_JWT_SECRET`; passwords are bcrypt-hashed.
 
@@ -164,7 +164,10 @@ running outside Docker.
 ## Error handling
 
 `github.com/sunkek/mishap`. Codes live in `internal/common/e/e.go`: `NotFound`,
-`Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`, `RateLimit`. Wrap with
+`Conflict`, `Forbidden`, `Internal`, `Validation`, `JWT`, `RateLimit`,
+`Unauthorized`. `Unauthorized` (401) is a failed authentication — bad
+credentials; `Forbidden` (403) is an authenticated caller denied access. Wrap
+with
 `mishap.Wrap(err, "message")`.
 
 `e.HTTPStatus` is the single source of truth for the code-to-status mapping,

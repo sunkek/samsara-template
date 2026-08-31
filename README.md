@@ -13,8 +13,11 @@
 
 # My Project
 
-<!-- feat:if backend -->
-An opinionated full-stack reference service: a Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. It runs as-is — clone it and bring up the stack to see a production-shaped Go service end to end (auth + a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks, Swagger docs). To start a fresh named project from it, run `./bootstrap.sh` to fork-and-rename.
+<!-- feat:if backend,frontend -->
+A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. Auth, a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running.
+<!-- feat:end -->
+<!-- feat:if backend,!frontend -->
+<!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor. Auth, a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running. -->
 <!-- feat:end -->
 <!-- feat:if frontend,!backend -->
 <!--~ A React + Vite + TypeScript single-page app, with the Docker/nginx production image, compose stacks and CI wiring already in place. Run it with `make run-local`; deploy it with `make up ENVIRONMENT=prod`. -->
@@ -107,7 +110,7 @@ chosen environment:
 
 ```bash
 make up                      # dev: hot reload, source mounted
-make up ENVIRONMENT=stage    # built images, frontend served by nginx (needs env/stage)
+make up ENVIRONMENT=stage    # built images (needs env/stage)
 make up ENVIRONMENT=prod     # built images, prod config        (needs env/prod)
 ```
 

@@ -3,7 +3,9 @@ package fiber
 import (
 	gf "github.com/gofiber/fiber/v3"
 	"github.com/sunkek/mishap"
+
 	fibercmp "github.com/sunkek/samsara-components/fiber"
+	"github.com/sunkek/samsara-template/backend/internal/common/e"
 
 	"github.com/sunkek/samsara-template/backend/internal/domain/note"
 	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
@@ -50,7 +52,7 @@ type createReq struct {
 func (a *Adapter) handleCreate(ctx gf.Ctx) error {
 	var req createReq
 	if err := ctx.Bind().Body(&req); err != nil {
-		return mishap.Wrap(err, "bind body")
+		return mishap.Wrap(err, "bind body", mishap.WithCode(e.Validation))
 	}
 	n, err := a.svc.Create(ctx.Context(), model.CreateInput{
 		Title: req.Title,

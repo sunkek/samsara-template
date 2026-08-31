@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -194,6 +195,19 @@ func TestRefreshRotatesToken(t *testing.T) {
 	}
 }
 
+// bcrypt refuses inputs over 72 bytes; the caller must see that as a bad
+// request, not as the server failing.
+func TestRegisterRejectsPasswordOverBcryptLimit(t *testing.T) {
+	long := strings.Repeat("a", 73)
+
+	_, err := newDomain(&stubDB{byEmail: map[string]model.User{}}).
+		Register(context.Background(), model.RegisterInput{Email: "a@b.com", Password: long})
+
+	if codeOf(err) != e.Validation {
+		t.Fatalf("want e.Validation (400) for a 73-byte password, got %v", err)
+	}
+}
+
 func TestLogin(t *testing.T) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte("correct-horse"), bcrypt.DefaultCost)
 	db := &stubDB{byEmail: map[string]model.User{
@@ -202,14 +216,14 @@ func TestLogin(t *testing.T) {
 
 	t.Run("unknown user", func(t *testing.T) {
 		_, err := newDomain(db).Login(context.Background(), model.LoginInput{Email: "nobody@b.com", Password: "x"})
-		if codeOf(err) != e.Forbidden {
-			t.Fatalf("want e.Forbidden, got %v", err)
+		if codeOf(err) != e.Unauthorized {
+			t.Fatalf("want e.Unauthorized (401), got %v", err)
 		}
 	})
 	t.Run("wrong password", func(t *testing.T) {
 		_, err := newDomain(db).Login(context.Background(), model.LoginInput{Email: "a@b.com", Password: "nope"})
-		if codeOf(err) != e.Forbidden {
-			t.Fatalf("want e.Forbidden, got %v", err)
+		if codeOf(err) != e.Unauthorized {
+			t.Fatalf("want e.Unauthorized (401), got %v", err)
 		}
 	})
 	t.Run("success", func(t *testing.T) {

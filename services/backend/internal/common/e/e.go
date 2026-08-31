@@ -3,13 +3,16 @@ package e
 import "github.com/sunkek/mishap"
 
 const (
-	Conflict   = mishap.Code("ERR_CONFLICT")
-	Forbidden  = mishap.Code("ERR_FORBIDDEN")
-	Internal   = mishap.Code("ERR_INTERNAL")
-	JWT        = mishap.Code("ERR_JWT_PROCESSING")
-	NotFound   = mishap.Code("ERR_NOT_FOUND")
-	RateLimit  = mishap.Code("ERR_RATE_LIMIT")
-	Validation = mishap.Code("ERR_VALIDATION")
+	Conflict  = mishap.Code("ERR_CONFLICT")
+	Forbidden = mishap.Code("ERR_FORBIDDEN")
+	Internal  = mishap.Code("ERR_INTERNAL")
+	JWT       = mishap.Code("ERR_JWT_PROCESSING")
+	NotFound  = mishap.Code("ERR_NOT_FOUND")
+	RateLimit = mishap.Code("ERR_RATE_LIMIT")
+	// Unauthorized is a failed or absent authentication (bad credentials).
+	// Distinct from Forbidden, which is an authenticated caller denied access.
+	Unauthorized = mishap.Code("ERR_UNAUTHORIZED")
+	Validation   = mishap.Code("ERR_VALIDATION")
 )
 
 // HTTPStatus maps an error to an HTTP status code. It is the single source of
@@ -29,7 +32,7 @@ func HTTPStatus(err error) int {
 			return 400
 		case Forbidden:
 			return 403
-		case JWT:
+		case JWT, Unauthorized:
 			return 401
 		case RateLimit:
 			return 429

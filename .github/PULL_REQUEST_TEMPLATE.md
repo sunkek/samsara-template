@@ -16,7 +16,7 @@ See CONTRIBUTING.md and AGENTS.md for conventions.
 ## Checklist
 
 - [ ] `cd services/backend && gofmt -l . && go vet ./... && go test ./...` passes
-- [ ] `cd services/frontend && npm run lint && npm run build` passes
+- [ ] `cd services/frontend && npm run lint && npm test && npm run build` passes
 - [ ] Swagger regenerated if API handlers changed (`make gen-api-docs`)
 - [ ] Migration committed alongside the Go code that needs it (if any)
 - [ ] Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) stay in sync

@@ -13,8 +13,8 @@ The obvious alternatives were a nil field with `if d.cache != nil` at each use,
 or build tags. Both spread the optionality across the domain logic, where it
 would be re-derived at every call site and eventually forgotten at one. Keeping
 it at the wiring boundary means dropping a feature changes exactly one line in
-`cmd/main` and deletes one adapter package — which is why `bootstrap.sh -F` can
-be a deletion rather than a rewrite.
+`cmd/main` and deletes one adapter package — which is why cutting a feature out
+of this project was a deletion rather than a rewrite.
 
 The consequence to keep in view: a no-op silently does nothing. Any capability
 behind such a port must be one the domain can genuinely live without — caching,
@@ -24,7 +24,8 @@ event publication — and never one whose absence changes a result.
 its Redis-less stand-in, `auth/adapter/memory`, is a working process-local
 denylist. See ADR 0004.
 
-ADR 0006 revisits the shipping side of this: once the domain demonstrating
-optional infra is pruned along with its infra, there is no call site left for a
-no-op to keep unguarded. The wiring claim — optionality lives at the composition
-root, not in the domain logic — is unaffected.
+ADR 0006 plans to revisit the shipping side of this: once the domain
+demonstrating optional infra is pruned along with its infra, no call site is left
+for a no-op to keep unguarded. That change has not been made — the no-ops
+described above are what the code does today — and the wiring claim (optionality
+lives at the composition root, not in the domain logic) is unaffected either way.

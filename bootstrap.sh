@@ -82,7 +82,7 @@ ask ENV_PREFIX   "New env var prefix (UPPER_SNAKE)" "$(printf '%s' "$APP_NAME" |
 ask MODULE_PATH  "New Go module path" "example.com/${APP_NAME}/backend"
 ask AUTHOR       "Author / copyright holder" "Your Name"
 ask AUTHOR_EMAIL "Security / contact email" "you@example.com"
-ask DEST         "Destination dir ('.' = rename in place)" "."
+ask DEST         "Destination dir ('.' = rename this checkout in place)" "../${APP_NAME}"
 ask FEATURES     "Features to keep ($ALL_FEATURES)" "$ALL_FEATURES"
 
 # Reject typos now rather than silently shipping a fork missing a feature.
@@ -231,6 +231,15 @@ if [ "$FEATURES" != "$ALL_FEATURES" ] || [ -f scripts/apply_features.sh ]; then
   scripts/apply_features.sh -f "$FEATURES" -C .
 fi
 rm -f scripts/apply_features.sh scripts/features.awk scripts/features_test.sh docs/FEATURES.md
+# Template-maintenance material that would dangle in a fork: the template's own
+# changelog, the ADR about the feature renderer, and the issue template that
+# tells a reporter to run a script this fork no longer has. A fork starts its
+# own changelog; `git log` holds the history either way.
+rm -f CHANGELOG.md docs/adr/0001-features-rendered-at-bootstrap.md
+if [ -f .github/ISSUE_TEMPLATE/bug_report.yml ]; then
+  # Drop the bootstrap step from the reproduction template.
+  sed -i '/bootstrap\.sh/d' .github/ISSUE_TEMPLATE/bug_report.yml
+fi
 
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
 if [ -n "$VERIFY" ] && [ -d "$TARGET/services/backend" ]; then

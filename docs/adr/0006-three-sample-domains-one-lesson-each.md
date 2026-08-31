@@ -1,8 +1,13 @@
 ---
-status: accepted
+status: accepted — not yet implemented
 ---
 
 # Three sample domains, one lesson each — and optional infra deletes its demo
+
+**This records a decision, not the current code.** Today the samples are `auth`,
+`note` and `notestats`; `note` still carries the `Cache` and `Events` ports and
+publishes `note.created`, and `NoopCache`/`NoopEvents` still ship. There is no
+`article` package. Read what follows as what the samples are being changed into.
 
 The samples were carrying too many lessons at once. `note` demonstrated the
 vertical slice, cache-aside reads, event publication and — through `notestats` —
@@ -34,9 +39,10 @@ does not have.
 This revisits ADR 0003, whose claim was that optional infrastructure is a port
 with a no-op implementation rather than a nil check. The wiring claim stands:
 optionality belongs at the composition root, and a fork adding Redis later
-declares a port and injects an adapter without touching a call site. What does
-not stand is shipping `NoopCache`/`NoopEvents` to forks that have no use for
-them — with `article` pruned, there is no call site left to keep unguarded.
+declares a port and injects an adapter without touching a call site. What will
+not stand, once this lands, is shipping `NoopCache`/`NoopEvents` to forks that
+have no use for them: with `article` pruned, no call site is left to keep
+unguarded.
 
 ## Why the template still renders every combination
 

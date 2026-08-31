@@ -64,6 +64,7 @@ function truthAnd(expr,   m, parts, j, t, neg, ok) {
 
 /^[ \t]*(\/\/|#|--|<!--|;)?[ \t]*feat:else[ \t]*$/ {
     if (depth == 0) { print "features.awk: feat:else outside a block" > "/dev/stderr"; exit 2 }
+    if (seenelse[depth]) { print "features.awk: second feat:else in one block" > "/dev/stderr"; exit 2 }
     seenelse[depth] = 1
     emit[depth] = emit[depth - 1] && !cond[depth]
     next

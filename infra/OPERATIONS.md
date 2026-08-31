@@ -56,10 +56,15 @@ In `env/<stage|prod>/api.env`:
 - **CORS** — `MY_PROJECT_API_FIBER_CORS_ALLOW_ORIGINS` defaults to `*`. A
   wildcard origin on an authenticated API is unsafe; set explicit origins. The
   backend logs a startup warning while it is `*`.
-- **Auth rate limiting** — login and refresh are throttled per-IP by an
-  in-memory limiter (`internal/common/middleware`), which is per-process. With
-  more than one backend replica, move the counter to a shared store (Redis is
-  already wired).
+- **Auth rate limiting** — the whole `/auth` group (register, login, refresh,
+  logout) is throttled per-IP by an in-memory limiter
+  (`internal/common/middleware`), which is per-process. With more than one
+  backend replica, move the counter to a shared store (Redis is already wired).
+- **`/metrics` is public** — it is in the auth middleware's public-prefix list in
+  `cmd/main/main.go`, so Prometheus can scrape it without a token. That exposes
+  request paths, volumes and error rates to anyone who can reach the port. Keep
+  it off the public interface, or drop the prefix from the list and give your
+  scraper a token.
 - **Server timeouts** — `READ_TIMEOUT` / `WRITE_TIMEOUT` / `IDLE_TIMEOUT`
   default to non-zero for slowloris protection. Raise `WRITE_TIMEOUT` only to
   stream large responses.

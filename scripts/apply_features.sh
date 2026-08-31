@@ -120,7 +120,9 @@ rendered=0
 changed_docs=""
 while IFS= read -r -d '' file; do
   grep -qI . "$file" 2>/dev/null || continue          # skip binaries
-  grep -qE '^[[:space:]]*(//|#|--|<!--|;)?[[:space:]]*feat:if[[:space:]]' "$file" || continue
+  # Same pattern the renderer matches on (features.awk), so a file is never
+  # skipped here while still carrying markers the renderer would have acted on.
+  grep -qE '^[[:space:]]*(//|#|--|<!--|;)?[[:space:]]*feat:(if|else|end)' "$file" || continue
   tmp="$file.feat.tmp"
   if ! awk -v feats="$FEATS" -f "$AWK_FILE" "$file" > "$tmp"; then
     echo "  FAILED to render $file" >&2

@@ -1,8 +1,11 @@
-// Package crypto provides authenticated encryption for secrets stored at rest
-// (SSH private keys, registry/DNS API tokens). It is AES-256-GCM under a single
-// master key supplied at startup via SHIPPER_API_SECRETS_MASTER_KEY. The Box
-// type satisfies the per-domain Secrets ports, so domains never import this
-// package directly and can be tested with an in-memory fake.
+// Package crypto provides authenticated encryption for secrets stored at rest,
+// as AES-256-GCM under a single master key supplied at startup.
+//
+// Nothing in the template imports it: it is here as a ready-made outbound
+// adapter for the case where a domain needs to persist a secret (an API token,
+// a private key). Wire it by declaring a port on that domain and injecting a
+// Box in cmd/main, the same way every other adapter is wired. Delete the
+// package if you have no such domain.
 package crypto
 
 import (

@@ -3,7 +3,9 @@ package fiber
 import (
 	gf "github.com/gofiber/fiber/v3"
 	"github.com/sunkek/mishap"
+
 	fibercmp "github.com/sunkek/samsara-components/fiber"
+	"github.com/sunkek/samsara-template/backend/internal/common/e"
 
 	"github.com/sunkek/samsara-template/backend/internal/domain/auth"
 	"github.com/sunkek/samsara-template/backend/internal/domain/auth/model"
@@ -52,7 +54,7 @@ type refreshReq struct {
 func (a *Adapter) handleRegister(ctx gf.Ctx) error {
 	var req credentialsReq
 	if err := ctx.Bind().Body(&req); err != nil {
-		return mishap.Wrap(err, "bind body")
+		return mishap.Wrap(err, "bind body", mishap.WithCode(e.Validation))
 	}
 	u, err := a.svc.Register(ctx.Context(), model.RegisterInput{Email: req.Email, Password: req.Password})
 	if err != nil {
@@ -73,7 +75,7 @@ func (a *Adapter) handleRegister(ctx gf.Ctx) error {
 func (a *Adapter) handleLogin(ctx gf.Ctx) error {
 	var req credentialsReq
 	if err := ctx.Bind().Body(&req); err != nil {
-		return mishap.Wrap(err, "bind body")
+		return mishap.Wrap(err, "bind body", mishap.WithCode(e.Validation))
 	}
 	tokens, err := a.svc.Login(ctx.Context(), model.LoginInput{Email: req.Email, Password: req.Password})
 	if err != nil {
@@ -94,7 +96,7 @@ func (a *Adapter) handleLogin(ctx gf.Ctx) error {
 func (a *Adapter) handleRefresh(ctx gf.Ctx) error {
 	var req refreshReq
 	if err := ctx.Bind().Body(&req); err != nil {
-		return mishap.Wrap(err, "bind body")
+		return mishap.Wrap(err, "bind body", mishap.WithCode(e.Validation))
 	}
 	tokens, err := a.svc.Refresh(ctx.Context(), req.RefreshToken)
 	if err != nil {
@@ -115,7 +117,7 @@ func (a *Adapter) handleRefresh(ctx gf.Ctx) error {
 func (a *Adapter) handleLogout(ctx gf.Ctx) error {
 	var req refreshReq
 	if err := ctx.Bind().Body(&req); err != nil {
-		return mishap.Wrap(err, "bind body")
+		return mishap.Wrap(err, "bind body", mishap.WithCode(e.Validation))
 	}
 	if err := a.svc.Logout(ctx.Context(), req.RefreshToken); err != nil {
 		return err

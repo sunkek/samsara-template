@@ -51,6 +51,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Committed `services/frontend/package-lock.json` for reproducible installs.
 
 ### Fixed
+- A fork rendered without `frontend` shipped a README promising "paired with a
+  React/Vite SPA" and telling the reader to run `./bootstrap.sh`, which
+  bootstrap had just deleted. The intro is now gated per app shape.
+- `bootstrap.sh` left template-maintenance material in the fork with nothing to
+  point at: the template's own `CHANGELOG.md`, ADR 0001 (the feature renderer),
+  and an issue template instructing reporters to run `bootstrap.sh`. All three
+  are now removed or amended.
+- A failed login returned 403. It is an authentication failure, so it is now
+  401 via a new `e.Unauthorized`; `e.Forbidden` keeps its meaning of an
+  authenticated caller denied access.
+- A password over bcrypt's 72-byte limit returned 500 rather than 400.
+- Malformed request bodies returned 500 on every handler — unauthenticated
+  input driving the 5xx error rate. Now 400.
+- `.gitlab-ci.yml` drifted from `.github/workflows/ci.yml` while three documents
+  claimed they were in sync: node 22 vs 26, `npm install` vs `npm ci` despite a
+  committed lockfile, and no `govulncheck`. Fixed, and the rule now states its
+  one real exception (template-maintenance jobs are GitHub-only).
+- `features.awk` set `seenelse` but never read it, so a second `feat:else` in
+  one block silently flipped the branch back on instead of erroring.
+- `apply_features.sh` selected files to render with a narrower pattern than the
+  renderer itself matches, so a file whose first marker was written differently
+  was skipped whole and shipped its markers raw.
+- `bootstrap.sh`'s interactive destination defaulted to `.` — the in-place path
+  that rewrites the template checkout itself. It now defaults to `../<app>`.
+- `internal/common/crypto` documented a different project entirely
+  (`SHIPPER_API_SECRETS_MASTER_KEY`, "per-domain Secrets ports").
+- `/metrics` is in the auth middleware's public-prefix list and was documented
+  nowhere; `docs/ARCHITECTURE.md` and `infra/OPERATIONS.md` now say so.
+- ADR 0006 described `article`/`articlestats` packages that do not exist yet
+  with status `accepted`; it is now marked not-yet-implemented.
 - The `feature-matrix` "no markers left" check matched `feat:if` anywhere in a
   line, so prose documenting the marker syntax (`docs/FEATURES.md`, ADR 0001)
   would have failed CI. It now matches the renderer's own rule — line start

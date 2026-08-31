@@ -13,13 +13,14 @@ import (
 // a server error — so the map is asserted exhaustively, by hand.
 func TestHTTPStatusMapsEveryCode(t *testing.T) {
 	want := map[mishap.Code]int{
-		NotFound:   404,
-		Conflict:   409,
-		Validation: 400,
-		Forbidden:  403,
-		JWT:        401,
-		RateLimit:  429,
-		Internal:   500,
+		NotFound:     404,
+		Conflict:     409,
+		Validation:   400,
+		Forbidden:    403,
+		JWT:          401,
+		Unauthorized: 401,
+		RateLimit:    429,
+		Internal:     500,
 	}
 	for code, status := range want {
 		t.Run(string(code), func(t *testing.T) {

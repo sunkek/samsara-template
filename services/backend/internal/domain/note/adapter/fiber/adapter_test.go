@@ -145,8 +145,8 @@ func TestMalformedBodyIsARequestError(t *testing.T) {
 	svc := &stubService{}
 	resp := send(t, appWithRoutes(t, svc), http.MethodPost, "/notes", `{"title":`)
 
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
-		t.Fatalf("status = %d, want a failure for an undecodable body", resp.StatusCode)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400 — an undecodable body is the client's fault", resp.StatusCode)
 	}
 	if svc.creates != 0 {
 		t.Errorf("Create called %d times, want 0 — a body that will not decode must not reach the use case", svc.creates)

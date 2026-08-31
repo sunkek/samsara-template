@@ -30,7 +30,7 @@ See `CLAUDE.md` for the project overview and the map of the other docs, and
 - Frontend tests run on vitest + Testing Library (jsdom): `npm test` (watch: `npm run test:watch`, coverage: `npm run test:coverage`). Tests sit next to the code as `*.test.ts`/`*.test.tsx`.
 - Query rendered output the way a user finds it (`getByRole`, `getByLabelText`), not by test id or class name.
 <!-- feat:end -->
-- CI runs on push/PR (`.github/workflows/ci.yml`, mirrored in `.gitlab-ci.yml`). Keep both CI files in sync.
+- CI runs on push/PR (`.github/workflows/ci.yml`, mirrored in `.gitlab-ci.yml`). Keep both in sync on what they check — same tool versions, same commands. The template-maintenance jobs (`feature-renderer`, `feature-matrix`, CodeQL) are GitHub-only by design.
 <!-- feat:if backend -->
   It runs backend `gofmt`/`go vet`/`go build`/`go test`.
 <!-- feat:end -->
