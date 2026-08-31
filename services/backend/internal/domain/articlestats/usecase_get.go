@@ -1,9 +1,9 @@
-package notestats
+package articlestats
 
 import (
 	"context"
 
-	"github.com/sunkek/samsara-template/backend/internal/domain/notestats/model"
+	"github.com/sunkek/samsara-template/backend/internal/domain/articlestats/model"
 )
 
 // Get returns the current projection. An empty projection (no events yet) is a

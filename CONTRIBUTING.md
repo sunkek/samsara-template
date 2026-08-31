@@ -14,7 +14,7 @@ Thanks for considering a contribution. This template aims to stay small, opinion
 - [`CONTEXT.md`](CONTEXT.md) is the glossary. Name things with its words, and extend it when you introduce a concept it does not cover.
 - Compose stacks, env files and production hardening live in [`infra/OPERATIONS.md`](infra/OPERATIONS.md).
 <!-- feat:if backend -->
-- Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the reasoning behind its shape in [`docs/adr/`](docs/adr/). The `note` domain is the canonical vertical slice; new domains mirror it.
+- Architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the reasoning behind its shape in [`docs/adr/`](docs/adr/). The `note` domain is the canonical vertical slice; new domains mirror it. `article` and `articlestats` add optional infrastructure and a projection on top of that shape.
 <!-- feat:end -->
 
 ## Getting set up

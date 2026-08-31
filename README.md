@@ -14,10 +14,10 @@
 # My Project
 
 <!-- feat:if backend,frontend -->
-A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. Auth, a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running.
+A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. Auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running.
 <!-- feat:end -->
 <!-- feat:if backend,!frontend -->
-<!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor. Auth, a sample `note` domain, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running. -->
+<!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor. Auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running. -->
 <!-- feat:end -->
 <!-- feat:if frontend,!backend -->
 <!--~ A React + Vite + TypeScript single-page app, with the Docker/nginx production image, compose stacks and CI wiring already in place. Run it with `make run-local`; deploy it with `make up ENVIRONMENT=prod`. -->
@@ -64,9 +64,9 @@ compose services, and no env vars for infra you do not run:
 |---|---|
 | `backend` | no Go service: `services/backend`, its CI jobs and its compose service go |
 | `frontend` | no SPA: `services/frontend`, its CI jobs and its compose service go |
-| `postgresql` | no persistence — and the sample domains (`auth`, `note`, `notestats`) go with it, leaving a supervisor + HTTP skeleton to build on |
-| `redis` | `note` reads stop being cache-aside (`NoopCache`) and `auth` swaps its token denylist for the in-memory one (single-process only) |
-| `rabbitmq` | `note` stops publishing events (`NoopEvents`) and the `notestats` read model is removed |
+| `postgresql` | no persistence — and the sample domains (`auth`, `note`, `article`, `articlestats`) go with it, leaving a supervisor + HTTP skeleton to build on |
+| `redis` | `auth` swaps its token denylist for the in-memory one (single-process only), and the `article`/`articlestats` samples — which exist to demonstrate caching and events — are removed |
+| `rabbitmq` | the `article`/`articlestats` samples are removed, same reason |
 
 Under the hood this is `scripts/apply_features.sh`, which you can also run on a
 checkout directly (`scripts/apply_features.sh -f backend,postgresql`). The
@@ -128,8 +128,9 @@ stage/prod separately for distinct secrets: `make gen-env GEN_ENVS=prod APP=…`
 - Auth: `POST /api/v1/auth/register`, `/auth/login`, `/auth/refresh` (JWT). Login returns an access + refresh token pair.
 - Sample domain: `note` — `POST /api/v1/notes`, `GET /api/v1/notes`, `GET /api/v1/notes/:id`. Protected: send `Authorization: Bearer <access_token>`.
 <!-- feat:end -->
-<!-- feat:if rabbitmq -->
-- Read model: `GET /api/v1/stats`, projected from `note.created` events.
+<!-- feat:if redis,rabbitmq -->
+- Sample domain with optional infra: `article` — same routes under `/api/v1/articles`, cached reads and `article.created` events.
+- Read model: `GET /api/v1/stats`, projected from `article.created` events.
 <!-- feat:end -->
 <!-- feat:end -->
 

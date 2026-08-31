@@ -78,12 +78,15 @@ HTTP → fiber adapter handler → Service (Domain method)
 <!-- feat:if template -->
 ## Optional infrastructure
 
-Redis and RabbitMQ are outbound ports, never hard dependencies: `note` declares
-`Cache` and `Events`, and `auth` declares `Revoker`. Each has a stand-in — the
-domain's `NoopCache`/`NoopEvents`, and `auth/adapter/memory` for the revoker —
-so a build without that infra keeps the same call sites and loses only the
-capability. That is what makes `bootstrap.sh -F` a deletion rather than a
-rewrite: `cmd/main` picks a different adapter, and nothing else moves.
+Redis and RabbitMQ are outbound ports, never hard dependencies: `article`
+declares `Cache` and `Events`, and `auth` declares `Revoker`. A domain that
+genuinely works without the capability gets a stand-in adapter —
+`auth/adapter/memory` for the revoker — so the call sites do not move and
+`cmd/main` simply picks a different one. A domain that exists *only* to
+demonstrate the capability is deleted instead: dropping Redis or RabbitMQ prunes
+`article` and `articlestats` outright, because a no-op cache behind a sample
+whose whole point is caching teaches nothing (ADR 0006). Either way
+`bootstrap.sh -F` is a deletion, not a rewrite.
 
 Postgres is the exception. The sample domains exist to demonstrate persistence,
 so a build without it keeps the supervisor, the HTTP server, logging, metrics
@@ -93,30 +96,35 @@ and the error mapping, and you add your own first domain.
 <!-- feat:if postgresql -->
 ## Sample domains
 
-**`note`** — the full vertical slice.
-<!-- feat:if redis -->
-Reads are **cache-aside** through a `Cache` port (`adapter/redis`): `Get`/`List`
-serve from cache on a hit and populate it on a miss; `Create` warms the item and
+Each sample teaches one thing, so you can read the one you need and delete the
+rest (ADR 0006).
+
+**`note`** — the vertical slice and nothing else: model, `Service`, `DB`, a
+fiber adapter and a postgresql adapter. No cache, no events. This is the domain
+a new domain is copied from.
+
+<!-- feat:if redis,rabbitmq -->
+**`article`** — the same slice plus optional infrastructure. Reads are
+**cache-aside** through a `Cache` port (`adapter/redis`): `Get`/`List` serve from
+cache on a hit and populate it on a miss; `Create` warms the item and
 invalidates the list. Caching is best-effort — a cache error is logged and falls
 back to the DB, never failing the request — and the TTL is
-`MY_PROJECT_API_NOTE_CACHE_TTL`. Pass `note.NoopCache{}` to disable it. Hit/miss
-metrics are recorded by the Redis adapter rather than by the use cases, so a
-build without a cache reports nothing instead of a permanent 0% hit rate.
-<!-- feat:end -->
-<!-- feat:if rabbitmq -->
-`Create` also publishes a `note.created` event through an `Events` port
-(`adapter/rabbitmq`) to a topic exchange, best-effort; `note.NoopEvents{}`
-disables it.
-<!-- feat:end -->
+`MY_PROJECT_API_ARTICLE_CACHE_TTL`. Hit/miss metrics are recorded by the Redis
+adapter rather than by the use cases, so a build without a cache reports nothing
+instead of a permanent 0% hit rate. `Create` also publishes an `article.created`
+event through an `Events` port (`adapter/rabbitmq`) to a topic exchange,
+best-effort.
 
-<!-- feat:if rabbitmq -->
-**`notestats`** — a read model (CQRS-lite) projecting `note.created` events into
-the single-row `note_stats` table. The samsara rabbitmq component owns the
-consume loop; `notestats/adapter/rabbitmq` is the message handler,
+**`articlestats`** — a read model (CQRS-lite) projecting `article.created` events
+into the single-row `article_stats` table. The samsara rabbitmq component owns
+the consume loop; `articlestats/adapter/rabbitmq` is the message handler,
 `adapter/postgresql` the projection store, and `adapter/fiber` exposes
 `GET /api/v1/stats`. Event, exchange and queue names live under
-`MY_PROJECT_API_EVENTS_*`. This is the end-to-end async demo: note create,
+`MY_PROJECT_API_EVENTS_*`. This is the end-to-end async demo: article create,
 publish, broker, consumer, projection, `/stats`.
+
+Both exist to demonstrate Redis and RabbitMQ, so a build without either one is
+rendered without them.
 <!-- feat:end -->
 
 ## Auth

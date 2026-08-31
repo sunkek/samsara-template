@@ -33,9 +33,14 @@ var (
 		Help: "Total notes created.",
 	})
 
+	articlesCreated = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "articles_created_total",
+		Help: "Total articles created.",
+	})
+
 	cacheOps = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "note_cache_ops_total",
-		Help: "Note cache lookups by result (hit/miss).",
+		Name: "article_cache_ops_total",
+		Help: "Article cache lookups by result (hit/miss).",
 	}, []string{"result"})
 
 	eventsPublished = prometheus.NewCounter(prometheus.CounterOpts{
@@ -68,7 +73,7 @@ var (
 func init() {
 	reg.MustRegister(
 		httpRequests, httpDuration,
-		notesCreated, cacheOps, eventsPublished, eventsConsumed,
+		notesCreated, articlesCreated, cacheOps, eventsPublished, eventsConsumed,
 		componentUp, componentRestarts, healthCheckDuration,
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
@@ -89,7 +94,10 @@ func ObserveHTTP(method, route string, status int, d time.Duration) {
 // NoteCreated counts a created note.
 func NoteCreated() { notesCreated.Inc() }
 
-// CacheHit / CacheMiss count note cache lookups.
+// ArticleCreated counts a created article.
+func ArticleCreated() { articlesCreated.Inc() }
+
+// CacheHit / CacheMiss count article cache lookups.
 func CacheHit()  { cacheOps.WithLabelValues("hit").Inc() }
 func CacheMiss() { cacheOps.WithLabelValues("miss").Inc() }
 

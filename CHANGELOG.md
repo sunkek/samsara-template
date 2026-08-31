@@ -126,6 +126,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   app service is selected (an empty `jobs:` is not a valid workflow).
 
 ### Changed
+- Split the sample domains so each teaches one thing (ADR 0006): `note` is now
+  the vertical slice and nothing else — no cache, no events — and is the domain
+  a fork copies; the new `article` domain carries the cache-aside reads and the
+  `article.created` publication; `notestats` becomes `articlestats`, projecting
+  `article.created` into `article_stats`. `article` and `articlestats` exist to
+  demonstrate Redis and RabbitMQ, so a build without either is rendered without
+  them, and `note.NoopCache` / `note.NoopEvents` no longer ship: with the
+  demonstrating domain pruned, no call site is left for a no-op to keep
+  unguarded. `MY_PROJECT_API_NOTE_CACHE_TTL` becomes
+  `MY_PROJECT_API_ARTICLE_CACHE_TTL`, and `EVENTS_NOTE_*` becomes
+  `EVENTS_ARTICLE_*`. New migrations `000003_create_articles` and
+  `000004_create_article_stats` replace `000003_create_note_stats`.
 - `feature-matrix` CI now covers all 32 feature combinations rather than a
   curated nine. A curated subset leaves the rest to break silently, and a fork
   only finds out after it has been created.

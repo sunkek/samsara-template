@@ -1,27 +1,27 @@
-package note
+package article
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
+	"github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 )
 
 // countingDB records how often each port method is called so the tests can
 // assert the cache short-circuits the database.
 type countingDB struct {
 	getCalls, listCalls int
-	note                model.Note
-	list                []model.Note
+	article             model.Article
+	list                []model.Article
 }
 
-func (c *countingDB) Insert(_ context.Context, n model.Note) (model.Note, error) { return n, nil }
-func (c *countingDB) Get(context.Context, string) (model.Note, error) {
+func (c *countingDB) Insert(_ context.Context, n model.Article) (model.Article, error) { return n, nil }
+func (c *countingDB) Get(context.Context, string) (model.Article, error) {
 	c.getCalls++
-	return c.note, nil
+	return c.article, nil
 }
-func (c *countingDB) List(context.Context) ([]model.Note, error) {
+func (c *countingDB) List(context.Context) ([]model.Article, error) {
 	c.listCalls++
 	return c.list, nil
 }
@@ -29,32 +29,32 @@ func (c *countingDB) List(context.Context) ([]model.Note, error) {
 // stubCache is a controllable Cache: it returns configured hits and counts
 // writes/invalidations.
 type stubCache struct {
-	noteHit bool
-	note    model.Note
-	listHit bool
-	list    []model.Note
-	getErr  error
+	articleHit bool
+	article    model.Article
+	listHit    bool
+	list       []model.Article
+	getErr     error
 
-	setNote    int
+	setArticle int
 	setList    int
 	invalidate int
 }
 
-func (s *stubCache) GetNote(context.Context, string) (model.Note, bool, error) {
-	return s.note, s.noteHit, s.getErr
+func (s *stubCache) GetArticle(context.Context, string) (model.Article, bool, error) {
+	return s.article, s.articleHit, s.getErr
 }
-func (s *stubCache) SetNote(context.Context, model.Note) error { s.setNote++; return nil }
-func (s *stubCache) GetList(context.Context) ([]model.Note, bool, error) {
+func (s *stubCache) SetArticle(context.Context, model.Article) error { s.setArticle++; return nil }
+func (s *stubCache) GetList(context.Context) ([]model.Article, bool, error) {
 	return s.list, s.listHit, s.getErr
 }
-func (s *stubCache) SetList(context.Context, []model.Note) error { s.setList++; return nil }
-func (s *stubCache) InvalidateList(context.Context) error        { s.invalidate++; return nil }
+func (s *stubCache) SetList(context.Context, []model.Article) error { s.setList++; return nil }
+func (s *stubCache) InvalidateList(context.Context) error           { s.invalidate++; return nil }
 
 func TestGetCacheHitSkipsDB(t *testing.T) {
 	db := &countingDB{}
-	cache := &stubCache{noteHit: true, note: model.Note{ID: "n1", Title: "cached"}}
+	cache := &stubCache{articleHit: true, article: model.Article{ID: "n1", Title: "cached"}}
 
-	got, err := New(db, cache, NoopEvents{}).Get(context.Background(), "n1")
+	got, err := New(db, cache, nopEvents{}).Get(context.Background(), "n1")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -67,10 +67,10 @@ func TestGetCacheHitSkipsDB(t *testing.T) {
 }
 
 func TestGetCacheMissReadsDBAndPopulates(t *testing.T) {
-	db := &countingDB{note: model.Note{ID: "n1", Title: "fromdb"}}
+	db := &countingDB{article: model.Article{ID: "n1", Title: "fromdb"}}
 	cache := &stubCache{} // miss
 
-	got, err := New(db, cache, NoopEvents{}).Get(context.Background(), "n1")
+	got, err := New(db, cache, nopEvents{}).Get(context.Background(), "n1")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -80,16 +80,16 @@ func TestGetCacheMissReadsDBAndPopulates(t *testing.T) {
 	if db.getCalls != 1 {
 		t.Errorf("want 1 DB get, got %d", db.getCalls)
 	}
-	if cache.setNote != 1 {
-		t.Errorf("want cache populated on miss, setNote = %d", cache.setNote)
+	if cache.setArticle != 1 {
+		t.Errorf("want cache populated on miss, setArticle = %d", cache.setArticle)
 	}
 }
 
 func TestListCacheMissReadsDBAndPopulates(t *testing.T) {
-	db := &countingDB{list: []model.Note{{ID: "n1"}}}
+	db := &countingDB{list: []model.Article{{ID: "n1"}}}
 	cache := &stubCache{}
 
-	got, err := New(db, cache, NoopEvents{}).List(context.Background())
+	got, err := New(db, cache, nopEvents{}).List(context.Background())
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -105,11 +105,11 @@ func TestCreateWarmsItemAndInvalidatesList(t *testing.T) {
 	db := &countingDB{}
 	cache := &stubCache{}
 
-	if _, err := New(db, cache, NoopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"}); err != nil {
+	if _, err := New(db, cache, nopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"}); err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	if cache.setNote != 1 {
-		t.Errorf("want item warmed, setNote = %d", cache.setNote)
+	if cache.setArticle != 1 {
+		t.Errorf("want item warmed, setArticle = %d", cache.setArticle)
 	}
 	if cache.invalidate != 1 {
 		t.Errorf("want list invalidated, invalidate = %d", cache.invalidate)
@@ -122,8 +122,8 @@ func TestCacheReadErrorFallsBackToDB(t *testing.T) {
 	down := errors.New("redis unreachable")
 
 	t.Run("get", func(t *testing.T) {
-		db := &countingDB{note: model.Note{ID: "n1", Title: "from db"}}
-		d := New(db, &stubCache{getErr: down}, NoopEvents{})
+		db := &countingDB{article: model.Article{ID: "n1", Title: "from db"}}
+		d := New(db, &stubCache{getErr: down}, nopEvents{})
 
 		got, err := d.Get(context.Background(), "n1")
 		if err != nil {
@@ -138,18 +138,24 @@ func TestCacheReadErrorFallsBackToDB(t *testing.T) {
 	})
 
 	t.Run("list", func(t *testing.T) {
-		db := &countingDB{list: []model.Note{{ID: "n1"}}}
-		d := New(db, &stubCache{getErr: down}, NoopEvents{})
+		db := &countingDB{list: []model.Article{{ID: "n1"}}}
+		d := New(db, &stubCache{getErr: down}, nopEvents{})
 
 		got, err := d.List(context.Background())
 		if err != nil {
 			t.Fatalf("list: %v", err)
 		}
 		if len(got) != 1 {
-			t.Errorf("got %d notes, want 1 from the database", len(got))
+			t.Errorf("got %d articles, want 1 from the database", len(got))
 		}
 		if db.listCalls != 1 {
 			t.Errorf("db.List called %d times, want 1", db.listCalls)
 		}
 	})
 }
+
+// nopEvents is a publisher that drops everything: these tests are about the
+// cache, and a publish failure must never be what makes one of them fail.
+type nopEvents struct{}
+
+func (nopEvents) ArticleCreated(context.Context, model.Article) error { return nil }

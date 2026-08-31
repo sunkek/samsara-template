@@ -26,7 +26,8 @@
 #        Dropping postgresql drops the sample domains with it (they are all
 #        Postgres-backed), leaving a bare supervisor + HTTP skeleton; dropping
 #        redis swaps auth's token denylist for the in-memory one; dropping
-#        rabbitmq removes the notestats read model and the note events.
+#        either redis or rabbitmq removes the article and articlestats samples,
+#        which exist only to demonstrate them.
 #   -f   force: proceed even if the destination dir already exists and is non-empty
 #   -V   verify: after rename, run `go build ./...` in the fork to confirm it compiles
 #

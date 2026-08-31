@@ -40,8 +40,9 @@ ALL_FEATURES="backend,frontend,postgresql,redis,rabbitmq"
 # --- Dependency rules ---------------------------------------------------------
 # The sample domains are Postgres-backed; without it there is nothing to serve,
 # so the backend degrades to a bare supervisor + fiber skeleton. Redis/RabbitMQ
-# are optional everywhere: the note domain falls back to its Noop ports and auth
-# swaps its Redis revoker for the in-memory one.
+# are optional everywhere: dropping either removes the article/articlestats
+# samples that demonstrate it, and without Redis auth swaps its revoker for the
+# in-memory one. The note sample carries no optional infra and always stays.
 if ! has backend && ! has frontend; then
   echo "note: neither backend nor frontend selected — infra-only scaffold." >&2
 fi
@@ -74,7 +75,8 @@ prune backend \
 
 prune postgresql \
   services/backend/internal/domain/note \
-  services/backend/internal/domain/notestats \
+  services/backend/internal/domain/article \
+  services/backend/internal/domain/articlestats \
   services/backend/internal/domain/auth \
   services/backend/internal/integration \
   infra/postgresql \
@@ -82,16 +84,26 @@ prune postgresql \
   scripts/postgresql_dump.sh \
   scripts/postgresql_restore.sh
 
+# article and articlestats exist to demonstrate Redis caching and RabbitMQ
+# events; a build missing either has no use for a domain whose whole purpose is
+# the capability it lacks, so both are pruned rather than degraded. See
+# docs/adr/0006.
+SAMPLE_OPTIONAL_INFRA="services/backend/internal/domain/article
+services/backend/internal/domain/articlestats
+infra/postgresql/migration/000003_create_articles.up.sql
+infra/postgresql/migration/000003_create_articles.down.sql
+infra/postgresql/migration/000004_create_article_stats.up.sql
+infra/postgresql/migration/000004_create_article_stats.down.sql"
+
+# shellcheck disable=SC2086 # the paths are a word list on purpose
 prune rabbitmq \
-  services/backend/internal/domain/note/adapter/rabbitmq \
-  services/backend/internal/domain/notestats \
+  $SAMPLE_OPTIONAL_INFRA \
   infra/rabbitmq \
-  infra/postgresql/migration/000003_create_note_stats.up.sql \
-  infra/postgresql/migration/000003_create_note_stats.down.sql \
   env/example/rabbitmq.env
 
+# shellcheck disable=SC2086
 prune redis \
-  services/backend/internal/domain/note/adapter/redis \
+  $SAMPLE_OPTIONAL_INFRA \
   services/backend/internal/domain/auth/adapter/redis \
   infra/redis \
   env/example/redis.env

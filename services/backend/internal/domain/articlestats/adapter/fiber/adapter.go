@@ -4,15 +4,15 @@ import (
 	gf "github.com/gofiber/fiber/v3"
 	fibercmp "github.com/sunkek/samsara-components/fiber"
 
-	"github.com/sunkek/samsara-template/backend/internal/domain/notestats"
+	"github.com/sunkek/samsara-template/backend/internal/domain/articlestats"
 )
 
-// Adapter exposes the note read-model (projection) over HTTP.
+// Adapter exposes the article read-model (projection) over HTTP.
 type Adapter struct {
-	svc notestats.Service
+	svc articlestats.Service
 }
 
-func New(f *fibercmp.Component, svc notestats.Service) *Adapter {
+func New(f *fibercmp.Component, svc articlestats.Service) *Adapter {
 	a := &Adapter{svc: svc}
 	f.Register(func(r gf.Router) {
 		r.Get("/stats", a.handleGet)
@@ -22,7 +22,7 @@ func New(f *fibercmp.Component, svc notestats.Service) *Adapter {
 
 // handleGet godoc
 //
-//	@Summary	Get note statistics (event-projected read model)
+//	@Summary	Get article statistics (event-projected read model)
 //	@Tags		stats
 //	@Produce	json
 //	@Security	BearerAuth

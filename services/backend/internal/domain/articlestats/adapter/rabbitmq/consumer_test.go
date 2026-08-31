@@ -9,16 +9,16 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	notemodel "github.com/sunkek/samsara-template/backend/internal/domain/note/model"
-	statsmodel "github.com/sunkek/samsara-template/backend/internal/domain/notestats/model"
+	articlemodel "github.com/sunkek/samsara-template/backend/internal/domain/article/model"
+	statsmodel "github.com/sunkek/samsara-template/backend/internal/domain/articlestats/model"
 )
 
 type stubSvc struct {
 	applied int
-	last    notemodel.NoteCreatedEvent
+	last    articlemodel.ArticleCreatedEvent
 }
 
-func (s *stubSvc) ApplyNoteCreated(_ context.Context, e notemodel.NoteCreatedEvent) error {
+func (s *stubSvc) ApplyArticleCreated(_ context.Context, e articlemodel.ArticleCreatedEvent) error {
 	s.applied++
 	s.last = e
 	return nil
@@ -26,12 +26,12 @@ func (s *stubSvc) ApplyNoteCreated(_ context.Context, e notemodel.NoteCreatedEve
 func (s *stubSvc) Get(context.Context) (statsmodel.Stats, error) { return statsmodel.Stats{}, nil }
 
 func TestHandleValidEvent(t *testing.T) {
-	body, _ := json.Marshal(notemodel.NoteCreatedEvent{NoteID: "n1", Title: "hello"})
+	body, _ := json.Marshal(articlemodel.ArticleCreatedEvent{ArticleID: "n1", Title: "hello"})
 	svc := &stubSvc{}
 	if err := NewConsumer(svc).Handle(amqp.Delivery{Body: body}); err != nil {
 		t.Fatalf("handle: %v", err)
 	}
-	if svc.applied != 1 || svc.last.NoteID != "n1" {
+	if svc.applied != 1 || svc.last.ArticleID != "n1" {
 		t.Errorf("apply count=%d last=%+v", svc.applied, svc.last)
 	}
 }
@@ -52,14 +52,14 @@ type stubFn struct {
 	applyFn func(context.Context) error
 }
 
-func (s *stubFn) ApplyNoteCreated(ctx context.Context, _ notemodel.NoteCreatedEvent) error {
+func (s *stubFn) ApplyArticleCreated(ctx context.Context, _ articlemodel.ArticleCreatedEvent) error {
 	return s.applyFn(ctx)
 }
 func (s *stubFn) Get(context.Context) (statsmodel.Stats, error) { return statsmodel.Stats{}, nil }
 
 func validDelivery(t *testing.T) amqp.Delivery {
 	t.Helper()
-	body, err := json.Marshal(notemodel.NoteCreatedEvent{NoteID: "n1", Title: "hello"})
+	body, err := json.Marshal(articlemodel.ArticleCreatedEvent{ArticleID: "n1", Title: "hello"})
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}

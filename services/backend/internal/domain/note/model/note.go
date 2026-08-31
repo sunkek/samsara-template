@@ -19,12 +19,3 @@ type CreateInput struct {
 	Title string
 	Body  string
 }
-
-// NoteCreatedEvent is the payload published when a note is created. It is the
-// shared contract between the RabbitMQ publisher and the consumer worker, so it
-// lives in model where both can import it.
-type NoteCreatedEvent struct {
-	NoteID    string    `json:"note_id"`
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"created_at"`
-}

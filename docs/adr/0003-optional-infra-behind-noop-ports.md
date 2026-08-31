@@ -1,13 +1,13 @@
 ---
-status: accepted — partially revisited by ADR 0006
+status: accepted — amended by ADR 0006
 ---
 
 # Optional infrastructure is a port with a no-op implementation, never a nil check
 
 Redis and RabbitMQ are optional in a fork, so the domains that use them declare
-ports for what they need — `note.Cache`, `note.Events` — and ship a no-op
-implementation of each (`NoopCache`, `NoopEvents`). A build without that infra
-injects the no-op. Call sites are unchanged and unguarded.
+ports for what they need — `article.Cache`, `article.Events`, `auth.Revoker` — and
+a build without that infrastructure injects a different implementation at the
+composition root. Call sites are unchanged and unguarded.
 
 The obvious alternatives were a nil field with `if d.cache != nil` at each use,
 or build tags. Both spread the optionality across the domain logic, where it
@@ -24,8 +24,8 @@ event publication — and never one whose absence changes a result.
 its Redis-less stand-in, `auth/adapter/memory`, is a working process-local
 denylist. See ADR 0004.
 
-ADR 0006 plans to revisit the shipping side of this: once the domain
-demonstrating optional infra is pruned along with its infra, no call site is left
-for a no-op to keep unguarded. That change has not been made — the no-ops
-described above are what the code does today — and the wiring claim (optionality
-lives at the composition root, not in the domain logic) is unaffected either way.
+ADR 0006 settled the shipping side of this. `article` is pruned along with the
+infrastructure it demonstrates, so no call site is left for a no-op to keep
+unguarded, and `NoopCache`/`NoopEvents` no longer ship. The wiring claim above —
+optionality lives at the composition root, not in the domain logic — is what
+survives, and `auth/adapter/memory` is the case that still exercises it.

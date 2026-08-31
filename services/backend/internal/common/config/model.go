@@ -25,27 +25,29 @@ type Config struct {
 	// feat:if postgresql
 	JWT  JWT  `envconfig:"JWT"`
 	Auth Auth `envconfig:"AUTH"`
-	Note Note `envconfig:"NOTE"`
 	// feat:end
-	// feat:if rabbitmq
+	// feat:if redis,rabbitmq
+	Article Article `envconfig:"ARTICLE"`
+	// feat:end
+	// feat:if redis,rabbitmq
 	Events Events `envconfig:"EVENTS"`
 	// feat:end
 }
 
-// feat:if rabbitmq
+// feat:if redis,rabbitmq
 // Events configures the RabbitMQ topic exchange and routing/queue names used by
-// the note domain's publisher and the consumer worker.
+// the article domain's publisher and the articlestats consumer worker.
 type Events struct {
-	Exchange        string `envconfig:"EXCHANGE" default:"my_project.events"`
-	NoteCreatedKey  string `envconfig:"NOTE_CREATED_KEY" default:"note.created"`
-	NoteWorkerQueue string `envconfig:"NOTE_WORKER_QUEUE" default:"note.created.worker"`
+	Exchange           string `envconfig:"EXCHANGE" default:"my_project.events"`
+	ArticleCreatedKey  string `envconfig:"ARTICLE_CREATED_KEY" default:"article.created"`
+	ArticleWorkerQueue string `envconfig:"ARTICLE_WORKER_QUEUE" default:"article.created.worker"`
 }
 
 // feat:end
-// feat:if postgresql
-// Note configures the sample note domain. CacheTTL is the Redis cache-aside
-// entry lifetime for note reads.
-type Note struct {
+// feat:if redis,rabbitmq
+// Article configures the sample article domain. CacheTTL is the Redis
+// cache-aside entry lifetime for article reads.
+type Article struct {
 	CacheTTL time.Duration `envconfig:"CACHE_TTL" default:"60s"`
 }
 

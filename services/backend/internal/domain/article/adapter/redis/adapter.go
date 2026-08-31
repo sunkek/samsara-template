@@ -1,8 +1,9 @@
-// Package redis implements the note domain's Cache outbound port on top of the
+// Package redis implements the article domain's Cache outbound port on top of the
 // samsara Redis component. Values are JSON-encoded. A miss reports
 // found=false with no error; a Redis or decode failure reports the error, which
 // the domain logs and treats as a miss. Cache hit/miss metrics are recorded
-// here, so a build wired with NoopCache emits none.
+// here rather than in the domain: whether a lookup hit is a fact about this
+// cache.
 package redis
 
 import (
@@ -14,12 +15,12 @@ import (
 	rediscmp "github.com/sunkek/samsara-components/redis"
 
 	"github.com/sunkek/samsara-template/backend/internal/common/metrics"
-	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
+	"github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 )
 
 const (
-	noteKeyPrefix = "note:cache:item:"
-	listKey       = "note:cache:list"
+	articleKeyPrefix = "article:cache:item:"
+	listKey          = "article:cache:list"
 )
 
 type Adapter struct {
@@ -32,32 +33,32 @@ func New(rdb rediscmp.Client, ttl time.Duration) *Adapter {
 	return &Adapter{rdb: rdb, ttl: ttl}
 }
 
-func (a *Adapter) GetNote(ctx context.Context, id string) (model.Note, bool, error) {
-	var n model.Note
-	found, err := a.getJSON(ctx, noteKeyPrefix+id, &n)
+func (a *Adapter) GetArticle(ctx context.Context, id string) (model.Article, bool, error) {
+	var n model.Article
+	found, err := a.getJSON(ctx, articleKeyPrefix+id, &n)
 	recordLookup(found)
 	if err != nil {
-		return model.Note{}, false, err
+		return model.Article{}, false, err
 	}
 	return n, found, nil
 }
 
-func (a *Adapter) SetNote(ctx context.Context, n model.Note) error {
-	return a.setJSON(ctx, noteKeyPrefix+n.ID, n)
+func (a *Adapter) SetArticle(ctx context.Context, n model.Article) error {
+	return a.setJSON(ctx, articleKeyPrefix+n.ID, n)
 }
 
-func (a *Adapter) GetList(ctx context.Context) ([]model.Note, bool, error) {
-	var notes []model.Note
-	found, err := a.getJSON(ctx, listKey, &notes)
+func (a *Adapter) GetList(ctx context.Context) ([]model.Article, bool, error) {
+	var articles []model.Article
+	found, err := a.getJSON(ctx, listKey, &articles)
 	recordLookup(found)
 	if err != nil {
 		return nil, false, err
 	}
-	return notes, found, nil
+	return articles, found, nil
 }
 
-func (a *Adapter) SetList(ctx context.Context, notes []model.Note) error {
-	return a.setJSON(ctx, listKey, notes)
+func (a *Adapter) SetList(ctx context.Context, articles []model.Article) error {
+	return a.setJSON(ctx, listKey, articles)
 }
 
 func (a *Adapter) InvalidateList(ctx context.Context) error {
@@ -83,8 +84,7 @@ func (a *Adapter) getJSON(ctx context.Context, key string, dst any) (bool, error
 }
 
 // recordLookup counts hits and misses here rather than in the domain: whether a
-// lookup hit is a fact about this cache, and a build wired with NoopCache has
-// no cache to report on, so it should emit nothing at all.
+// lookup hit is a fact about this cache, not about the use case that asked.
 func recordLookup(found bool) {
 	if found {
 		metrics.CacheHit()

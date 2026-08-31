@@ -52,10 +52,10 @@ The plain structs a domain is about, in `<domain>/model/`. No framework
 imports, so both adapters may depend on it.
 _Avoid_: entity, DTO, schema
 
-<!-- feat:if rabbitmq -->
+<!-- feat:if redis,rabbitmq -->
 **Read model**:
 A domain whose state is projected from events rather than written directly, and
-which serves queries only. `notestats` is the example.
+which serves queries only. `articlestats` is the example.
 _Avoid_: cache, view, materialized view, aggregate
 
 **Projection**:

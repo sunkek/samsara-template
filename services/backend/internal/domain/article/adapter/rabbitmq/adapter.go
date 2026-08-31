@@ -1,4 +1,4 @@
-// Package rabbitmq implements the note domain's Events outbound port by
+// Package rabbitmq implements the article domain's Events outbound port by
 // publishing JSON events to a RabbitMQ topic exchange via the samsara rabbitmq
 // component.
 package rabbitmq
@@ -10,7 +10,7 @@ import (
 	rabbitcmp "github.com/sunkek/samsara-components/rabbitmq"
 
 	"github.com/sunkek/samsara-template/backend/internal/common/metrics"
-	"github.com/sunkek/samsara-template/backend/internal/domain/note/model"
+	"github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 )
 
 // Publisher is the slice of the samsara rabbitmq component this adapter needs.
@@ -21,27 +21,27 @@ type Publisher interface {
 }
 
 type Adapter struct {
-	pub            Publisher
-	exchange       string
-	noteCreatedKey string
+	pub               Publisher
+	exchange          string
+	articleCreatedKey string
 }
 
 // New builds the publisher adapter. The caller is responsible for declaring the
 // exchange on the component (see cmd/main).
-func New(pub Publisher, exchange, noteCreatedKey string) *Adapter {
-	return &Adapter{pub: pub, exchange: exchange, noteCreatedKey: noteCreatedKey}
+func New(pub Publisher, exchange, articleCreatedKey string) *Adapter {
+	return &Adapter{pub: pub, exchange: exchange, articleCreatedKey: articleCreatedKey}
 }
 
-func (a *Adapter) NoteCreated(ctx context.Context, n model.Note) error {
-	body, err := json.Marshal(model.NoteCreatedEvent{
-		NoteID:    n.ID,
+func (a *Adapter) ArticleCreated(ctx context.Context, n model.Article) error {
+	body, err := json.Marshal(model.ArticleCreatedEvent{
+		ArticleID: n.ID,
 		Title:     n.Title,
 		CreatedAt: n.CreatedAt,
 	})
 	if err != nil {
 		return err
 	}
-	if err := a.pub.Publish(ctx, a.exchange, a.noteCreatedKey, rabbitcmp.ContentTypeJSON, body); err != nil {
+	if err := a.pub.Publish(ctx, a.exchange, a.articleCreatedKey, rabbitcmp.ContentTypeJSON, body); err != nil {
 		return err
 	}
 	metrics.EventPublished()

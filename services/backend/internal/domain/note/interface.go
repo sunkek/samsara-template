@@ -22,24 +22,3 @@ type DB interface {
 	List(ctx context.Context) ([]model.Note, error)
 	Get(ctx context.Context, id string) (model.Note, error)
 }
-
-// Cache is the outbound port for read caching (cache-aside). It is best-effort:
-// the domain treats any cache error as a miss and falls back to the DB, so a
-// cache outage never fails a request — but it logs the error, so a cache that
-// is down is visible rather than silent. The bool reports a hit. Hit/miss
-// metrics belong to the implementation, not to this port. The Redis adapter
-// implements it; NoopCache disables caching without touching call sites.
-type Cache interface {
-	GetNote(ctx context.Context, id string) (model.Note, bool, error)
-	SetNote(ctx context.Context, n model.Note) error
-	GetList(ctx context.Context) ([]model.Note, bool, error)
-	SetList(ctx context.Context, notes []model.Note) error
-	InvalidateList(ctx context.Context) error
-}
-
-// Events is the outbound port for publishing domain events. It is best-effort:
-// the domain ignores publish errors so a broker outage never fails a write. The
-// RabbitMQ adapter implements it; NoopEvents disables publishing.
-type Events interface {
-	NoteCreated(ctx context.Context, n model.Note) error
-}

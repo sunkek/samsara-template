@@ -37,7 +37,11 @@ func connect(t *testing.T) *pgx.Conn {
 // TestSchemaMigrated confirms the sample migrations have been applied.
 func TestSchemaMigrated(t *testing.T) {
 	conn := connect(t)
-	for _, table := range []string{"users", "notes"} {
+	tables := []string{"users", "notes"}
+	// feat:if redis,rabbitmq
+	tables = append(tables, "articles", "article_stats")
+	// feat:end
+	for _, table := range tables {
 		var exists bool
 		err := conn.QueryRow(context.Background(),
 			`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = $1)`,

@@ -30,15 +30,16 @@ import (
 	"github.com/sunkek/samsara-template/backend/internal/domain/note"
 	notefiber "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/fiber"
 	notepostgresql "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/postgresql"
-	// feat:if redis
-	noteredis "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/redis"
-	// feat:end
-	// feat:if rabbitmq
-	noterabbit "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/rabbitmq"
-	"github.com/sunkek/samsara-template/backend/internal/domain/notestats"
-	notestatsfiber "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/fiber"
-	notestatspostgresql "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/postgresql"
-	notestatsrabbit "github.com/sunkek/samsara-template/backend/internal/domain/notestats/adapter/rabbitmq"
+	// feat:if redis,rabbitmq
+	"github.com/sunkek/samsara-template/backend/internal/domain/article"
+	articlefiber "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/fiber"
+	articlepostgresql "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/postgresql"
+	articlerabbit "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/rabbitmq"
+	articleredis "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/redis"
+	"github.com/sunkek/samsara-template/backend/internal/domain/articlestats"
+	articlestatsfiber "github.com/sunkek/samsara-template/backend/internal/domain/articlestats/adapter/fiber"
+	articlestatspostgresql "github.com/sunkek/samsara-template/backend/internal/domain/articlestats/adapter/postgresql"
+	articlestatsrabbit "github.com/sunkek/samsara-template/backend/internal/domain/articlestats/adapter/rabbitmq"
 	// feat:end
 	// feat:end
 
@@ -146,12 +147,16 @@ func main() {
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
 	)
+	// feat:if redis
 	// Declare the events exchange up front; the component (re-)declares it on
-	// every Start, so this is safe to call before the supervisor runs.
+	// every Start, so this is safe to call before the supervisor runs. The
+	// exchange serves the article domain, which exists only in a build that has
+	// both Redis and RabbitMQ.
 	if err := rabbitCmp.DeclareExchange(cfg.Events.Exchange, rabbitmq.ExchangeTopic, true); err != nil {
 		logger.Error("declare events exchange", "error", err)
 		os.Exit(1)
 	}
+	// feat:end
 
 	// feat:end
 
@@ -244,36 +249,33 @@ func main() {
 	}
 	fiberCmp.Use(authREST.Middleware(publicPrefixes...))
 
-	// note: protected sample domain, wired to whichever optional infra this
-	// build has — cache-aside reads via Redis, note.created events via RabbitMQ,
-	// and the domain's Noop ports in place of either when it is absent.
+	// note: the protected vertical-slice sample — DB adapter, domain, REST
+	// adapter, nothing else. This is the domain a fork copies.
 	noteDB := notepostgresql.New(postgresCmp)
-	// feat:if redis
-	noteCache := noteredis.New(redisCmp, cfg.Note.CacheTTL)
-	// feat:else
-	//~ noteCache := note.NoopCache{}
-	// feat:end
-	// feat:if rabbitmq
-	noteEvents := noterabbit.New(rabbitCmp, cfg.Events.Exchange, cfg.Events.NoteCreatedKey)
-	// feat:else
-	//~ noteEvents := note.NoopEvents{}
-	// feat:end
-	noteDomain := note.New(noteDB, noteCache, noteEvents)
+	noteDomain := note.New(noteDB)
 	_ = notefiber.New(fiberCmp, noteDomain)
 
-	// feat:if rabbitmq
-	// notestats: a read model projected from note.created events (CQRS-lite).
-	// The rabbitmq component owns the consume loop; we register a handler and a
-	// queue bound to the events exchange. Subscribe is safe before Start — the
-	// binding is (re-)applied when the broker connects.
-	statsDB := notestatspostgresql.New(postgresCmp)
-	statsDomain := notestats.New(statsDB)
-	statsConsumer := notestatsrabbit.NewConsumer(statsDomain)
-	if err := rabbitCmp.SubscribeWithKey(cfg.Events.Exchange, cfg.Events.NoteWorkerQueue, cfg.Events.NoteCreatedKey, statsConsumer.Handle); err != nil {
-		logger.Error("subscribe note.created worker", "error", err)
+	// feat:if redis,rabbitmq
+	// article: the same slice plus optional infrastructure — cache-aside reads
+	// through Redis and article.created events through RabbitMQ.
+	articleDB := articlepostgresql.New(postgresCmp)
+	articleCache := articleredis.New(redisCmp, cfg.Article.CacheTTL)
+	articleEvents := articlerabbit.New(rabbitCmp, cfg.Events.Exchange, cfg.Events.ArticleCreatedKey)
+	articleDomain := article.New(articleDB, articleCache, articleEvents)
+	_ = articlefiber.New(fiberCmp, articleDomain)
+
+	// articlestats: a read model projected from article.created events
+	// (CQRS-lite). The rabbitmq component owns the consume loop; we register a
+	// handler and a queue bound to the events exchange. Subscribe is safe before
+	// Start — the binding is (re-)applied when the broker connects.
+	statsDB := articlestatspostgresql.New(postgresCmp)
+	statsDomain := articlestats.New(statsDB)
+	statsConsumer := articlestatsrabbit.NewConsumer(statsDomain)
+	if err := rabbitCmp.SubscribeWithKey(cfg.Events.Exchange, cfg.Events.ArticleWorkerQueue, cfg.Events.ArticleCreatedKey, statsConsumer.Handle); err != nil {
+		logger.Error("subscribe article.created worker", "error", err)
 		os.Exit(1)
 	}
-	_ = notestatsfiber.New(fiberCmp, statsDomain)
+	_ = articlestatsfiber.New(fiberCmp, statsDomain)
 	// feat:end
 	// feat:end
 

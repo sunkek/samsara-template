@@ -49,7 +49,7 @@ func TestCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := &stubDB{}
-			got, err := New(db, NoopCache{}, NoopEvents{}).Create(context.Background(), tt.in)
+			got, err := New(db).Create(context.Background(), tt.in)
 			if tt.wantErr != "" {
 				if codeOf(err) != tt.wantErr {
 					t.Fatalf("want code %q, got err %v", tt.wantErr, err)
@@ -74,34 +74,8 @@ func TestCreate(t *testing.T) {
 
 func TestCreatePropagatesDBError(t *testing.T) {
 	dbErr := errors.New("boom")
-	_, err := New(&stubDB{insertErr: dbErr}, NoopCache{}, NoopEvents{}).Create(context.Background(), model.CreateInput{Title: "x"})
+	_, err := New(&stubDB{insertErr: dbErr}).Create(context.Background(), model.CreateInput{Title: "x"})
 	if !errors.Is(err, dbErr) {
 		t.Fatalf("want wrapped db error, got %v", err)
-	}
-}
-
-// stubEvents records the last published note.
-type stubEvents struct {
-	calls int
-	last  model.Note
-}
-
-func (s *stubEvents) NoteCreated(_ context.Context, n model.Note) error {
-	s.calls++
-	s.last = n
-	return nil
-}
-
-func TestCreatePublishesEvent(t *testing.T) {
-	ev := &stubEvents{}
-	got, err := New(&stubDB{}, NoopCache{}, ev).Create(context.Background(), model.CreateInput{Title: "hello"})
-	if err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	if ev.calls != 1 {
-		t.Fatalf("want 1 event published, got %d", ev.calls)
-	}
-	if ev.last.ID != got.ID || ev.last.Title != "hello" {
-		t.Errorf("published note = %+v, want id=%s title=hello", ev.last, got.ID)
 	}
 }
