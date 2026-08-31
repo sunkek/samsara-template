@@ -5,7 +5,7 @@ go 1.26.4
 toolchain go1.26.6
 
 require (
-	github.com/gofiber/contrib/v3/swaggo v1.0.9
+	github.com/gofiber/contrib/v3/swaggo v1.0.10
 	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -13,13 +13,13 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/rabbitmq/amqp091-go v1.13.0
+	github.com/rabbitmq/amqp091-go v1.14.0
 	github.com/sunkek/mishap v1.1.0
-	github.com/sunkek/samsara v0.6.0
-	github.com/sunkek/samsara-components/fiber v0.5.0
-	github.com/sunkek/samsara-components/postgresql v0.2.0
-	github.com/sunkek/samsara-components/rabbitmq v0.3.0
-	github.com/sunkek/samsara-components/redis v0.5.0
+	github.com/sunkek/samsara v0.7.0
+	github.com/sunkek/samsara-components/fiber v0.6.1
+	github.com/sunkek/samsara-components/postgresql v0.4.1
+	github.com/sunkek/samsara-components/rabbitmq v0.5.1
+	github.com/sunkek/samsara-components/redis v0.7.1
 	golang.org/x/crypto v0.55.0
 )
 
@@ -30,17 +30,17 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/georgysavva/scany/v2 v2.1.4 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
-	github.com/go-openapi/jsonreference v1.0.0 // indirect
-	github.com/go-openapi/spec v0.22.9 // indirect
-	github.com/go-openapi/swag/conv v0.28.0 // indirect
-	github.com/go-openapi/swag/jsonutils v0.28.0 // indirect
-	github.com/go-openapi/swag/loading v0.28.0 // indirect
-	github.com/go-openapi/swag/pools v0.28.0 // indirect
-	github.com/go-openapi/swag/stringutils v0.28.0 // indirect
-	github.com/go-openapi/swag/typeutils v0.28.0 // indirect
-	github.com/go-openapi/swag/yamlutils v0.28.0 // indirect
+	github.com/go-openapi/jsonreference v1.0.1 // indirect
+	github.com/go-openapi/spec v0.22.11 // indirect
+	github.com/go-openapi/swag/conv v0.29.1 // indirect
+	github.com/go-openapi/swag/jsonutils v0.29.1 // indirect
+	github.com/go-openapi/swag/loading v0.29.1 // indirect
+	github.com/go-openapi/swag/pools v0.29.1 // indirect
+	github.com/go-openapi/swag/stringutils v0.29.1 // indirect
+	github.com/go-openapi/swag/typeutils v0.29.1 // indirect
+	github.com/go-openapi/swag/yamlutils v0.29.1 // indirect
 	github.com/gofiber/schema v1.8.4 // indirect
-	github.com/gofiber/utils/v2 v2.4.1 // indirect
+	github.com/gofiber/utils/v2 v2.4.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
