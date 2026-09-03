@@ -24,12 +24,12 @@ const (
 )
 
 type Adapter struct {
-	rdb rediscmp.Client
+	rdb rediscmp.KV
 	ttl time.Duration
 }
 
 // New builds the cache adapter. ttl is the entry lifetime (0 = no expiry).
-func New(rdb rediscmp.Client, ttl time.Duration) *Adapter {
+func New(rdb rediscmp.KV, ttl time.Duration) *Adapter {
 	return &Adapter{rdb: rdb, ttl: ttl}
 }
 
