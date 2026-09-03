@@ -16,11 +16,11 @@ import (
 const keyPrefix = "auth:revoked:"
 
 type Adapter struct {
-	rdb rediscmp.Client
+	rdb rediscmp.KV
 }
 
-// New builds the adapter from any redis Client (the *Component satisfies it).
-func New(rdb rediscmp.Client) *Adapter {
+// New builds the adapter from any redis KV (the *Component satisfies it).
+func New(rdb rediscmp.KV) *Adapter {
 	return &Adapter{rdb: rdb}
 }
 

@@ -5,6 +5,15 @@ import (
 
 	gf "github.com/gofiber/fiber/v3"
 	"github.com/sunkek/samsara-components/fiber"
+	// feat:if postgresql
+	"github.com/sunkek/samsara-components/postgresql"
+	// feat:end
+	// feat:if rabbitmq
+	"github.com/sunkek/samsara-components/rabbitmq"
+	// feat:end
+	// feat:if redis
+	"github.com/sunkek/samsara-components/redis"
+	// feat:end
 )
 
 type Config struct {
@@ -161,6 +170,21 @@ type PostgreSQL struct {
 	MinConns       int32         `envconfig:"MIN_CONNS"`
 }
 
+func (p PostgreSQL) ToSamsaraCfg() postgresql.Config {
+	return postgresql.Config{
+		Host:           p.Host,
+		Port:           p.Port,
+		Name:           p.Name,
+		User:           p.User,
+		Pass:           p.Pass,
+		SSLMode:        p.SSLMode,
+		URI:            p.URI,
+		ConnectTimeout: p.ConnectTimeout,
+		MaxConns:       p.MaxConns,
+		MinConns:       p.MinConns,
+	}
+}
+
 // feat:end
 // feat:if rabbitmq
 type RabbitMQ struct {
@@ -172,6 +196,19 @@ type RabbitMQ struct {
 	URI            string        `envconfig:"URI"`
 	ConnectTimeout time.Duration `envconfig:"CONNECT_TIMEOUT"`
 	PublishTimeout time.Duration `envconfig:"PUBLISH_TIMEOUT"`
+}
+
+func (r RabbitMQ) ToSamsaraCfg() rabbitmq.Config {
+	return rabbitmq.Config{
+		Host:           r.Host,
+		Port:           r.Port,
+		VHost:          r.VHost,
+		User:           r.User,
+		Pass:           r.Pass,
+		URI:            r.URI,
+		ConnectTimeout: r.ConnectTimeout,
+		PublishTimeout: r.PublishTimeout,
+	}
 }
 
 // feat:end
@@ -190,8 +227,7 @@ type Redis struct {
 
 	// TLS knobs (samsara-components/redis v0.2+). Disabled by default — safe on a
 	// trusted internal network; enable when Redis is reached over an untrusted
-	// link (mirrors the Postgres SSL_MODE hardening). Field order must match
-	// redis.Config for the struct conversion in cmd/main.
+	// link (mirrors the Postgres SSL_MODE hardening).
 	TLS                   bool   `envconfig:"TLS" default:"false"`
 	TLSCAFile             string `envconfig:"TLS_CA_FILE"`
 	TLSCertFile           string `envconfig:"TLS_CERT_FILE"`
@@ -199,6 +235,28 @@ type Redis struct {
 	TLSServerName         string `envconfig:"TLS_SERVER_NAME"`
 	TLSInsecureSkipVerify bool   `envconfig:"TLS_INSECURE_SKIP_VERIFY" default:"false"`
 	TLSMinVersion         string `envconfig:"TLS_MIN_VERSION"`
+}
+
+func (r Redis) ToSamsaraCfg() redis.Config {
+	return redis.Config{
+		Host:                  r.Host,
+		Port:                  r.Port,
+		DB:                    r.DB,
+		User:                  r.User,
+		Pass:                  r.Pass,
+		ConnectTimeout:        r.ConnectTimeout,
+		DialTimeout:           r.DialTimeout,
+		ReadTimeout:           r.ReadTimeout,
+		WriteTimeout:          r.WriteTimeout,
+		PoolSize:              r.PoolSize,
+		TLS:                   r.TLS,
+		TLSCAFile:             r.TLSCAFile,
+		TLSCertFile:           r.TLSCertFile,
+		TLSKeyFile:            r.TLSKeyFile,
+		TLSServerName:         r.TLSServerName,
+		TLSInsecureSkipVerify: r.TLSInsecureSkipVerify,
+		TLSMinVersion:         r.TLSMinVersion,
+	}
 }
 
 // feat:end

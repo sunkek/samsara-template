@@ -133,7 +133,7 @@ func main() {
 	sup.Add(hs, samsara.WithTier(samsara.TierCritical))
 
 	// feat:if postgresql
-	postgresCmp := postgresql.New(postgresql.Config(cfg.PostgreSQL), postgresql.WithLogger(logger), postgresql.WithName("postgresql"))
+	postgresCmp := postgresql.New(cfg.PostgreSQL.ToSamsaraCfg(), postgresql.WithLogger(logger), postgresql.WithName("postgresql"))
 	sup.Add(postgresCmp,
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
@@ -142,7 +142,7 @@ func main() {
 	// feat:end
 
 	// feat:if rabbitmq
-	rabbitCmp := rabbitmq.New(rabbitmq.Config(cfg.RabbitMQ), rabbitmq.WithLogger(logger), rabbitmq.WithName("rabbitmq"))
+	rabbitCmp := rabbitmq.New(cfg.RabbitMQ.ToSamsaraCfg(), rabbitmq.WithLogger(logger), rabbitmq.WithName("rabbitmq"))
 	sup.Add(rabbitCmp,
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
@@ -161,7 +161,7 @@ func main() {
 	// feat:end
 
 	// feat:if redis
-	redisCmp := redis.New(redis.Config(cfg.Redis), redis.WithLogger(logger), redis.WithName("redis"))
+	redisCmp := redis.New(cfg.Redis.ToSamsaraCfg(), redis.WithLogger(logger), redis.WithName("redis"))
 	sup.Add(redisCmp,
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
