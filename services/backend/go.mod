@@ -14,7 +14,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/rabbitmq/amqp091-go v1.14.0
-	github.com/sunkek/mishap v1.1.0
+	github.com/sunkek/mishap v1.2.0
 	github.com/sunkek/samsara v0.7.0
 	github.com/sunkek/samsara-components/fiber v0.6.1
 	github.com/sunkek/samsara-components/postgresql v0.5.0
