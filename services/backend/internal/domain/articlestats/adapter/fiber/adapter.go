@@ -14,10 +14,14 @@ type Adapter struct {
 
 func New(f *fibercmp.Component, svc articlestats.Service) *Adapter {
 	a := &Adapter{svc: svc}
-	f.Register(func(r gf.Router) {
-		r.Get("/stats", a.handleGet)
-	})
+	f.Register(a.routes)
 	return a
+}
+
+// routes is the adapter's route table, a method rather than a closure so tests
+// can mount the real routes on a bare router (see the note adapter).
+func (a *Adapter) routes(r gf.Router) {
+	r.Get("/stats", a.handleGet)
 }
 
 // handleGet godoc

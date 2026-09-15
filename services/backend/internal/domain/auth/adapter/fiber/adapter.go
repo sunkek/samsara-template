@@ -20,17 +20,22 @@ type Adapter struct {
 // the /auth group only (e.g. a rate limiter on the credential endpoints).
 func New(f *fibercmp.Component, svc auth.Service, mw ...gf.Handler) *Adapter {
 	a := &Adapter{svc: svc}
-	f.Register(func(r gf.Router) {
-		g := r.Group("/auth")
-		for _, m := range mw {
-			g.Use(m)
-		}
-		g.Post("/register", a.handleRegister)
-		g.Post("/login", a.handleLogin)
-		g.Post("/refresh", a.handleRefresh)
-		g.Post("/logout", a.handleLogout)
-	})
+	f.Register(func(r gf.Router) { a.routes(r, mw...) })
 	return a
+}
+
+// routes is the adapter's route table. It is a method rather than a closure
+// inside New for the same reason as in the note adapter: tests mount the real
+// routes on a bare router, so a wrong verb or path fails them.
+func (a *Adapter) routes(r gf.Router, mw ...gf.Handler) {
+	g := r.Group("/auth")
+	for _, m := range mw {
+		g.Use(m)
+	}
+	g.Post("/register", a.handleRegister)
+	g.Post("/login", a.handleLogin)
+	g.Post("/refresh", a.handleRefresh)
+	g.Post("/logout", a.handleLogout)
 }
 
 type credentialsReq struct {
