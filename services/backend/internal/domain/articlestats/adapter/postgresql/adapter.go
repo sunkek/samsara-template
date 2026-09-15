@@ -40,7 +40,9 @@ func (a *Adapter) RecordArticleCreated(ctx context.Context, e articlemodel.Artic
 }
 
 func (a *Adapter) Get(ctx context.Context) (model.Stats, error) {
-	const q = `SELECT total_count, COALESCE(last_article_id::text, ''), last_title, updated_at
+	// COALESCE must be aliased: scany maps columns to fields by name, and an
+	// unaliased expression comes back as "coalesce", which matches no field.
+	const q = `SELECT total_count, COALESCE(last_article_id::text, '') AS last_article_id, last_title, updated_at
 		FROM article_stats WHERE id = 1`
 	var out model.Stats
 	if err := a.pg.Get(ctx, &out, q); err != nil {
