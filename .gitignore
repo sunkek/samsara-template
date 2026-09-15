@@ -21,11 +21,25 @@ profile.cov
 go.work
 go.work.sum
 
-# Secrets — ignore real env files, but keep the committed templates in env/example/
+# Secrets.
+#
+# Plaintext is ignored by DIRECTORY, not by name mask. The failure this
+# prevents is a plaintext file edited at a path that gets committed, and a mask
+# only covers the names it happens to know: a certificate, a service-account
+# JSON or a single-line token file walks straight past *.env.
+#
+# env/sops/ is the one path in this repository where a secret may sit in git,
+# and `make secrets-check` fails if anything under it is not ciphertext. The
+# negations are needed at every level, because git will not descend into a
+# directory it has already excluded.
 .env
 *.env
 !*.example.env
-!env/example/*.env
+env/*
+!env/example
+!env/example/**
+!env/sops
+!env/sops/**
 infra/rabbitmq/definitions.json
 infra/redis/redis.conf
 .codex
