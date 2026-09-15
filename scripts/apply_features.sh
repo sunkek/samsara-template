@@ -110,12 +110,9 @@ prune redis \
 # The CI definitions stay: the `secrets` and `shell` jobs do not depend on an app
 # service, and an infra-only scaffold still has env files and shell scripts to
 # keep honest.
-if ! has backend && ! has frontend; then
-  for p in .github/workflows/codeql.yml; do
-    [ -e "$p" ] || continue
-    rm -f "$p"
-    echo "  removed $p"
-  done
+if ! has backend && ! has frontend && [ -e .github/workflows/codeql.yml ]; then
+  rm -f .github/workflows/codeql.yml
+  echo "  removed .github/workflows/codeql.yml"
 fi
 
 # The in-memory revoker exists only as the Redis adapter's stand-in.
