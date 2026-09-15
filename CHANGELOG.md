@@ -8,6 +8,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- SOPS + age for the env files that hold production credentials: ciphertext under
+  `env/sops/<env>/` is committed, plaintext under `env/<env>/` is git-ignored by
+  directory, and `make secrets-check` fails if that is ever the other way round.
+  `scripts/secrets.sh` (`init`, `encrypt`, `decrypt`, `check`, `add-recipient`,
+  with `FILES=` to act on part of an environment) and `docs/SECRETS.md` carry it.
+  Optional: a fork that deploys nothing can ignore it and keep using `gen-env`.
+- `make env-add` / `make env-sync` (`scripts/env.sh`): add a variable to the
+  template and to every environment in one step, re-encrypting whatever is
+  committed, and fill in variables an environment is missing without touching
+  the values it already has.
+- `integration` CI job in both pipelines: the suite runs against a real Postgres
+  with the migration chain applied, so the hand-written SQL of docs/adr/0005 is
+  executed on every push rather than only on a laptop.
+- `internal/integration/adapters_test.go`: the postgresql adapters themselves —
+  round trips, the `pgx.ErrNoRows` → `e.NotFound` translation, the unique index
+  on `users.email`, and the projection's `ON CONFLICT` upsert.
+- Unit tests where coverage was reporting zero over real behaviour: the config
+  loader and its `LogLevel` decoder, the auth HTTP handlers (including that the
+  password hash never reaches the wire), and the article-stats domain and HTTP
+  adapter.
+- `secrets` and `shell` CI jobs: no plaintext env file is tracked, nothing under
+  `env/sops/` is unencrypted, and `shellcheck -S warning` over every shipped
+  script.
+- `infra/OPERATIONS.md`: deployment (including the migrate-before-`up` ordering
+  and why CI must not carry plaintext env files), backup and restore, and where
+  to look for logs and health.
+
+### Fixed
+- `articlestats` read model returned an error for every non-empty projection:
+  the `COALESCE` in its `SELECT` was unaliased, so the column came back as
+  `coalesce` and matched no field. Found by the new adapter integration tests.
+
+### Changed
+- `README.md` describes the frontend as a starting point rather than a finished
+  SPA — the build, the nginx image and its CSP, the tested dev proxy and the
+  test harness are real; `src/` is a placeholder page. The depth is backend and
+  infrastructure, and the README now says so.
+- `SECURITY.md` points at GitHub private vulnerability reporting first, with
+  email as the fallback.
+- `AGENTS.md` and `CONTRIBUTING.md` list `golangci-lint` and the integration
+  suite, both of which CI has been enforcing while the docs said otherwise.
+- The `migrate/migrate` image is pinned to `v4.19.0` wherever it is invoked, so
+  the Makefile and both CI pipelines cannot drift apart.
+
+### Removed
+- `scripts/postgresql_dump.sh` and `scripts/postgresql_restore.sh`: leftovers
+  from another project (they referenced `biopunk_api` and `sber_knowledge_*`
+  containers, a `scripts/env/dev.env` that does not exist here, and shipped into
+  every fork unreferenced). `make pg-dump` / `make pg-restore` already do this
+  correctly for this project.
 - `make check-api-docs`, run in both CI files: regenerates the Swagger spec into
   a temp dir and fails if it differs from the committed one. The spec is
   committed because `Dockerfile.prod` copies `services/backend/docs` into the

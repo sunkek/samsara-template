@@ -422,12 +422,12 @@ pg-restore:
 migrate-new:
 	@[ -n "$(n)" ] || (echo "Usage: make migrate-new n=<migration_name>" && exit 1)
 	docker run --rm -u $(USER_ID):$(GROUP_ID) -v "$(PWD)/infra/postgresql/migration:/migration" \
-		migrate/migrate create -ext sql -dir /migration -seq $(n)
+		migrate/migrate:v4.19.0 create -ext sql -dir /migration -seq $(n)
 
 migrate-up:
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
 	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
-		migrate/migrate -path=/migration \
+		migrate/migrate:v4.19.0 -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		up; \
 	PGPASSWORD="$$POSTGRES_PASSWORD" docker exec -i $(PG_CONTAINER) \
@@ -437,7 +437,7 @@ migrate-up:
 migrate-down:
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
 	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
-		migrate/migrate -path=/migration \
+		migrate/migrate:v4.19.0 -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		down 1
 
@@ -445,7 +445,7 @@ migrate-force:
 	@[ -n "$(v)" ] || (echo "Usage: make migrate-force v=<version>" && exit 1)
 	@set -a; source "$(POSTGRES_ENV)"; set +a; \
 	docker run --rm -v "$(PWD)/infra/postgresql/migration:/migration" --network "$(NETWORK)" \
-		migrate/migrate -path=/migration \
+		migrate/migrate:v4.19.0 -path=/migration \
 		-database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$(PG_CONTAINER):5432/$$APP_DB?sslmode=disable" \
 		force $(v)
 # feat:end
