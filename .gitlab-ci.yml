@@ -70,6 +70,40 @@ backend-lint:
 
 # feat:end
 
+# feat:if backend,postgresql
+# Mirrors the `integration` job in .github/workflows/ci.yml: the only run that
+# executes the hand-written SQL (docs/adr/0005). A GitLab service container
+# rather than docker-in-docker, so no privileged runner is needed; the migration
+# chain is applied with the golang-migrate CLI because `docker run` is not
+# available inside a plain service-container job.
+integration:
+  stage: test
+  image: golang:1.26.4
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: app
+    POSTGRES_PASSWORD: app
+    POSTGRES_DB: app
+    GOPATH: $CI_PROJECT_DIR/.go-cache
+    INTEGRATION_DATABASE_URL: postgres://app:app@postgres:5432/app?sslmode=disable
+  cache:
+    key:
+      files:
+        - services/backend/go.sum
+    paths:
+      - .go-cache/
+  script:
+    - *template-guard
+    # Keep this version in step with the migrate/migrate image tag used by the
+    # GitHub job and by `make migrate-up`.
+    - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.0
+    - $GOPATH/bin/migrate -path infra/postgresql/migration -database "$INTEGRATION_DATABASE_URL" up
+    - cd services/backend
+    - go test -tags=integration ./internal/integration/...
+# feat:end
+
 # feat:if frontend
 frontend:
   stage: test
@@ -85,3 +119,32 @@ frontend:
     - npm test
     - npm run build
 # feat:end
+
+# Secrets hygiene. Mirrors the `secrets` job in .github/workflows/ci.yml. Needs
+# no age key and cannot decrypt anything: both questions are answerable from the
+# ciphertext and the index alone.
+secrets:
+  stage: test
+  image: alpine:3.22
+  script:
+    - apk add --no-cache make git bash
+    - make secrets-check
+    - |
+      tracked="$(git ls-files 'env/*' | grep -Ev '^env/(example|sops)/' || true)"
+      if [ -n "$tracked" ]; then
+        echo "These plaintext env files are tracked by git:" >&2
+        echo "$tracked" >&2
+        echo "Move them under env/<env>/ (git-ignored) and commit the ciphertext" >&2
+        echo "from env/sops/ instead. If any of them ever reached a remote," >&2
+        echo "rotate the values -- deleting the file does not remove it from history." >&2
+        exit 1
+      fi
+
+# Mirrors the `shell` job in .github/workflows/ci.yml. Severity `warning`:
+# info-level notes are style opinions, and a lint that fires on taste gets
+# ignored rather than fixed.
+shell:
+  stage: test
+  image: koalaman/shellcheck-alpine:stable
+  script:
+    - shellcheck -x -S warning bootstrap.sh scripts/*.sh

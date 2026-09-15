@@ -80,9 +80,7 @@ prune postgresql \
   services/backend/internal/domain/auth \
   services/backend/internal/integration \
   infra/postgresql \
-  env/example/postgresql.env \
-  scripts/postgresql_dump.sh \
-  scripts/postgresql_restore.sh
+  env/example/postgresql.env
 
 # article and articlestats exist to demonstrate Redis caching and RabbitMQ
 # events; a build missing either has no use for a domain whose whole purpose is
@@ -108,10 +106,12 @@ prune redis \
   infra/redis \
   env/example/redis.env
 
-# With neither app service selected there is nothing for CI to build, and an
-# empty `jobs:`/pipeline is not a valid workflow — drop the CI definitions.
+# With neither app service selected there is no code to analyse, so CodeQL goes.
+# The CI definitions stay: the `secrets` and `shell` jobs do not depend on an app
+# service, and an infra-only scaffold still has env files and shell scripts to
+# keep honest.
 if ! has backend && ! has frontend; then
-  for p in .github/workflows/ci.yml .github/workflows/codeql.yml .gitlab-ci.yml; do
+  for p in .github/workflows/codeql.yml; do
     [ -e "$p" ] || continue
     rm -f "$p"
     echo "  removed $p"

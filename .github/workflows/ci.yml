@@ -6,6 +6,7 @@ on:
   pull_request:
 
 jobs:
+# feat:if backend|frontend
 # feat:if backend
   # Skip CI while the repo is still the unbootstrapped template. Presence of
   # services/backend/go.sum is the signal: the template ships without it; the
@@ -31,6 +32,7 @@ jobs:
           fi
 # feat:else
 #~         run: echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
+# feat:end
 # feat:end
 
   # feat:if backend
@@ -79,6 +81,52 @@ jobs:
 
   # feat:end
 
+  # feat:if backend,postgresql
+  # The integration suite against a real Postgres. Blocking, not informational:
+  # it is the only run that executes the hand-written SQL, and docs/adr/0005
+  # chooses hand-written SQL deliberately. A green pipeline over an unparsed
+  # query is worse than no job at all.
+  #
+  # The database must be EMPTY at the start — the job applies the migration
+  # chain itself with the same pinned migrate image the Makefile uses, so the
+  # two cannot drift.
+  integration:
+    needs: gate
+    if: needs.gate.outputs.bootstrapped == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      INTEGRATION_DATABASE_URL: postgres://app:app@127.0.0.1:5432/app?sslmode=disable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/backend/go.mod
+          cache-dependency-path: services/backend/go.sum
+      - name: migrate
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/infra/postgresql/migration:/migration" \
+            migrate/migrate:v4.19.0 -path=/migration \
+            -database "$INTEGRATION_DATABASE_URL" up
+      - name: integration tests
+        working-directory: services/backend
+        run: go test -tags=integration ./internal/integration/...
+  # feat:end
+
   # feat:if frontend
   frontend:
     needs: gate
@@ -103,6 +151,41 @@ jobs:
       - name: build
         run: npm run build
   # feat:end
+
+  # The repository ships bash: bootstrap.sh is the first thing an adopter runs,
+  # and scripts/ carries the feature renderer and the secret handling. shellcheck
+  # is preinstalled on GitHub runners, so this costs a few seconds.
+  #
+  # Severity is `warning`: info-level notes here are style opinions
+  # (SC2012, SC2015), and a lint that fires on taste gets ignored, not fixed.
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: shellcheck
+        run: shellcheck -x -S warning bootstrap.sh scripts/*.sh
+
+  # Secrets hygiene. Runs everywhere, needs no age key and cannot decrypt
+  # anything: both questions below are answerable from the ciphertext and the
+  # index alone. A check that only runs on a laptop catches the mistake after
+  # the commit that matters.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: nothing under env/sops/ is plaintext
+        run: make secrets-check
+      - name: no plaintext env file is tracked
+        run: |
+          tracked="$(git ls-files 'env/*' | grep -Ev '^env/(example|sops)/' || true)"
+          if [ -n "$tracked" ]; then
+            echo "These plaintext env files are tracked by git:" >&2
+            echo "$tracked" >&2
+            echo "Move them under env/<env>/ (git-ignored) and commit the ciphertext" >&2
+            echo "from env/sops/ instead. If any of them ever reached a remote," >&2
+            echo "rotate the values -- deleting the file does not remove it from history." >&2
+            exit 1
+          fi
 
   # feat:if template
   # Unit tests for the feature renderer itself. Cheap, so it gates the (much
