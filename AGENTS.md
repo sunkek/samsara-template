@@ -7,7 +7,8 @@ See `CLAUDE.md` for the project overview and the map of the other docs, and
 
 <!-- feat:if backend -->
 - Language: Go (`go 1.26` module at `services/backend/go.mod`).
-- Run `gofmt` before committing. No style linter beyond standard `go vet`.
+- Run `gofmt` before committing. `go vet` and `golangci-lint run` (config in
+  `services/backend/.golangci.yml`) both gate CI, so run them too.
 - Exported identifiers: `CamelCase`. Internal helpers: `camelCase`. Package names: short lowercase.
 - One use case per file: `usecase_<verb>.go`.
 <!-- feat:end -->

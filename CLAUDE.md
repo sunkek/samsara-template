@@ -21,9 +21,12 @@ slice. Replace them with your own; they exist to be read and then deleted.
   direction, sample domains, auth, config, error codes, correlated logging.
   Read it before adding or changing a domain, an adapter or a use case.
 <!-- feat:end -->
-- **`infra/OPERATIONS.md`** — compose stacks, env-file generation and secret
-  sharing, host ports, production hardening. Read it before touching `infra/`,
-  `env/`, or deploy config.
+- **`infra/OPERATIONS.md`** — compose stacks, env-file generation, host ports,
+  deployment, backup and restore, production hardening. Read it before touching
+  `infra/`, `env/`, or deploy config.
+- **`docs/SECRETS.md`** — how environment variables are added (`make env-add`,
+  `make env-sync`) and how the ones that open production are encrypted with SOPS
+  and age. Read it before adding a variable or touching `env/sops/`.
 <!-- feat:if template -->
 - **`docs/FEATURES.md`** — feature-marker syntax and the rules for editing a
   marked file. Read it before editing any file carrying `feat:if` comments.

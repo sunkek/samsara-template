@@ -16,7 +16,19 @@ for fixes and re-apply relevant patches to their fork.
 
 **Do not open a public issue for security problems.**
 
-Email **security@example.com** with:
+<!-- feat:if template -->
+Preferred: open a [private security advisory](https://github.com/sunkek/samsara-template/security/advisories/new)
+on GitHub (Security → Report a vulnerability). It is private to you and the
+maintainers until a fix ships.
+
+Otherwise email **security@example.com**. Either way, include:
+<!-- feat:end -->
+<!-- feat:if !template -->
+<!--~ Preferred: report it privately through this project's forge — on GitHub, -->
+<!--~ Security → Report a vulnerability; on GitLab, a confidential issue. -->
+<!--~ -->
+<!--~ Otherwise email **security@example.com**. Either way, include: -->
+<!-- feat:end -->
 
 - a description of the vulnerability and its impact,
 - the affected component(s) and version/commit,

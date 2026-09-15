@@ -14,13 +14,13 @@
 # My Project
 
 <!-- feat:if backend,frontend -->
-A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor, paired with a React/Vite SPA. Auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running.
+A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor: auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs, wired and running. The React/Vite frontend is a **starting point, not a finished SPA** — the build, the nginx production image with its CSP, the tested dev proxy and the test harness are in place; `src/` is a placeholder page for you to replace. The depth here is backend and infrastructure.
 <!-- feat:end -->
 <!-- feat:if backend,!frontend -->
 <!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor. Auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running. -->
 <!-- feat:end -->
 <!-- feat:if frontend,!backend -->
-<!--~ A React + Vite + TypeScript single-page app, with the Docker/nginx production image, compose stacks and CI wiring already in place. Run it with `make run-local`; deploy it with `make up ENVIRONMENT=prod`. -->
+<!--~ A React + Vite + TypeScript starting point: the build, the Docker/nginx production image with its CSP, compose stacks, the test harness and CI wiring are in place, and `src/` is a placeholder page for you to replace. Run it with `make run-local`; deploy it with `make up ENVIRONMENT=prod`. -->
 <!-- feat:end -->
 <!-- feat:if !backend,!frontend -->
 <!--~ An infrastructure-only scaffold: Docker Compose stacks, per-environment env-file generation and CI, with no application service yet. Add yours under `services/`. -->
@@ -116,6 +116,33 @@ make up ENVIRONMENT=prod     # built images, prod config        (needs env/prod)
 
 `dev` shares its secrets with `local` (so `run-local` works too); generate
 stage/prod separately for distinct secrets: `make gen-env GEN_ENVS=prod APP=…`.
+
+### Environment variables and secrets
+
+`env/example/*.env` says which variables exist; `env/<env>/*.env` holds what
+they are set to and is git-ignored by directory. Add a variable in one step
+instead of four:
+
+```bash
+make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
+make env-add FILE=api.env NAME=MY_PROJECT_API_STRIPE_KEY SECRET=1 ENVS=prod
+make env-sync                    # after pulling someone else's new variable
+```
+
+For values that open production, the repository is wired for
+[SOPS](https://github.com/getsops/sops) with age: ciphertext under `env/sops/`
+is committed, plaintext never is, and `make secrets-check` fails if that is ever
+the other way round.
+
+```bash
+make secrets-init NAME=<you> KEY=age1...   # once per repository
+make secrets-encrypt                        # env/prod/ -> env/sops/prod/
+make secrets-decrypt                        # on another machine or a fresh clone
+```
+
+Optional — a fork that deploys nothing can ignore it. See
+[docs/SECRETS.md](docs/SECRETS.md) for which repositories want it, how to add
+and remove an operator, and why removal means rotation.
 
 <!-- feat:if frontend -->
 - Frontend: http://localhost:5173 (dev server) or the published nginx port under `stage`/`prod`.

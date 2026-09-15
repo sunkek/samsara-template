@@ -37,6 +37,29 @@ The same logical credential lives in two files (the Postgres app password is
 secrets are mapped by variable name *and* file. Get that wrong and the backend
 fails to authenticate against its own infra (SQLSTATE 28P01).
 
+Add a variable with `make env-add` rather than by hand — it writes the template
+and every environment in one step, and re-encrypts whatever is committed:
+
+```bash
+make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
+make env-sync                    # after pulling someone else's new variable
+```
+
+Values that open production are encrypted in git with SOPS and age: ciphertext
+under `env/sops/<env>/`, plaintext never committed, `make secrets-check` failing
+if that is ever the other way round. A fresh clone plus one age key can then
+bring an environment up.
+
+```bash
+make secrets-encrypt             # env/prod/ -> env/sops/prod/
+make secrets-decrypt             # the other way, on another machine
+```
+
+**[`docs/SECRETS.md`](../docs/SECRETS.md) is the reference** — when a repository
+wants SOPS at all, adding and removing an operator, per-environment recipients,
+and why removing one means rotating. It is optional: a project that deploys
+nothing can ignore it and keep using `gen-env`.
+
 ## Host ports
 
 Host-side ports live in `env/<env>/ports.env`, sourced by the Makefile before
@@ -44,6 +67,76 @@ every `docker compose` call and before the local `air` launch. Editing one
 variable therefore shifts both the published host port and the port the backend
 connects to. Change them here to coexist with other projects holding the
 defaults; container-internal ports stay standard.
+
+## Deploying
+
+This template ships no deploy pipeline, and that is deliberate — how code
+reaches a host is the one thing every team already has an opinion about. What it
+does ship is a stack that runs the same way everywhere, so a pipeline has little
+to do:
+
+```bash
+# on the host, once
+git clone <repo> && cd <repo>
+make secrets-decrypt             # or place env/prod/ by hand
+docker network create dev
+
+# every release
+git pull
+make secrets-decrypt FORCE=1     # only if the encrypted env files changed
+make migrate-up ENVIRONMENT=prod
+make up ENVIRONMENT=prod
+```
+
+Order matters: **migrations run before the new image starts.** A container that
+boots against a schema it expects to have been migrated will fail its
+healthcheck, and `make up` will have replaced the running one by then.
+
+Two properties worth preserving in whatever CI you wire this into:
+
+- **Never send `env/<env>/` to the host from CI.** The host decrypts it, or it
+  was placed there once by hand. A pipeline that carries plaintext secrets makes
+  every CI variable and every job log part of the blast radius.
+- **Keep deploy jobs uninterruptible.** A cancelled test costs nothing; a
+  cancelled deploy leaves a half-migrated database.
+
+Rolling back is `git checkout <previous tag> && make up ENVIRONMENT=prod`, which
+covers code but **not** a migration that has already run — an `up` migration
+that drops or rewrites data is not undone by starting the old image. Write
+reversible migrations, and keep a dump from immediately before a destructive
+one (below).
+
+## Backup and restore
+
+```bash
+make pg-dump                                  # -> infra/postgresql/backup/<timestamp>.sql
+make pg-dump DUMP_FILE=before-migration.sql
+make pg-restore DUMP_FILE=infra/postgresql/backup/<file>.sql
+```
+
+Both act on `$ENVIRONMENT` (default `dev`), so name the environment explicitly
+when it is not dev: `make pg-dump ENVIRONMENT=prod`.
+
+`infra/postgresql/backup/` is a working directory on one host, not a backup
+strategy. A dump that lives on the machine it was taken from is gone in exactly
+the failure it exists for. Ship them somewhere else — object storage at a
+different provider, on a schedule, with a restore you have actually run at least
+once. An untested restore is a hope, not a backup.
+
+Restore is destructive: `pg-restore` loads into the live database. Take a dump
+first, even when restoring, so a bad file does not cost you both copies.
+
+## Logs and health
+
+```bash
+make logs                        # follow every container in the stack
+make ps                          # what is running
+```
+
+The backend serves `/health` on `MY_PROJECT_API_HEALTH_PORT` (default 3333,
+separate from the API port so a health probe never traverses the API's
+middleware) and Prometheus metrics on `/metrics` — see the hardening note below
+on keeping the latter off a public interface.
 
 ## Production hardening
 

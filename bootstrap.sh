@@ -149,6 +149,11 @@ else
          "$TARGET/services/frontend/dist" "$TARGET/services/backend/tmp" \
          "$TARGET/services/backend/main" \
          "$TARGET/.claude/settings.local.json"
+  # env/sops/ goes too, along with the generated plaintext. This is a
+  # template-maintenance tool: a fork starts with its own recipients and its own
+  # secrets, and inheriting another project's ciphertext would leave .sops.yaml
+  # (which is kept, and rewritten) claiming keys that no longer match the files.
+  # Run this against a project of your own and it will take env/sops/ with it.
   find "$TARGET/env" -mindepth 1 -maxdepth 1 -type d -not -name example -exec rm -rf {} + 2>/dev/null || true
   # Drop fork-only cruft: bootstrap.sh is a template-maintenance tool with no
   # purpose in a fork, and dated session-message dumps are local agent state.

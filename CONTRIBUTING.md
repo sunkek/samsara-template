@@ -30,7 +30,10 @@ Everything CI enforces, run locally first. The CI definitions
 is, and the two must stay in sync.
 
 <!-- feat:if backend -->
-- `cd services/backend && gofmt -l . && go vet ./... && go test ./...` — all clean.
+- `cd services/backend && gofmt -l . && go vet ./... && golangci-lint run && go test ./...` — all clean.
+- If you touched SQL or a migration, run the integration suite too:
+  `make run && make migrate-up && make test-integration`. CI runs it against a
+  throwaway Postgres, so a broken query fails the pipeline, not production.
 - If you touched API handlers, regenerate Swagger: `make gen-api-docs`, and commit
   `services/backend/docs/` with the change — CI fails if the committed spec is
   stale (`make check-api-docs`).
