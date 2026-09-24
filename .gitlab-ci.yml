@@ -130,7 +130,9 @@ secrets:
     - apk add --no-cache make git bash
     - make secrets-check
     - |
-      tracked="$(git ls-files 'env/*' | grep -Ev '^env/(example|sops)/' || true)"
+      # Split so that a failing git fails the job instead of reading as clean.
+      files="$(git ls-files 'env/*')" || exit 1
+      tracked="$(printf '%s\n' "$files" | grep -Ev '^env/(example|sops)/' || true)"
       if [ -n "$tracked" ]; then
         echo "These plaintext env files are tracked by git:" >&2
         echo "$tracked" >&2
