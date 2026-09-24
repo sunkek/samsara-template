@@ -31,7 +31,7 @@ BACKUP_DIR := ./infra/postgresql/backup
 COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] && . "$(PORTS_ENV)"; set +a; docker compose $(COMPOSE_FILES)
 
 .PHONY: help gen-env gen-key-hex gen-key-b64 env-add env-sync \
-	secrets-init secrets-encrypt secrets-decrypt secrets-check secrets-add-recipient \
+	secrets-init secrets-encrypt secrets-decrypt secrets-check secrets-add-recipient secrets-remove-recipient \
 	up down down-v restart restart-v restart-local restart-local-v \
 	run run-local stop logs ps pull
 # feat:if backend
@@ -56,6 +56,7 @@ help:
 	@echo "  make secrets-decrypt [ENVIRONMENT=prod] [FILES=...] [FORCE=1] - the other way"
 	@echo "  make secrets-check            - Fail if anything under env/sops/ is plaintext"
 	@echo "  make secrets-add-recipient NAME=<them> KEY=age1... - Grant an operator access"
+	@echo "  make secrets-remove-recipient NAME=<them> - Revoke it: re-key and rotate data keys"
 	@echo "  make gen-key-hex              - Print a random 32-byte hex secret"
 	@echo "  make gen-key-b64              - Print a random 32-byte base64 secret"
 	@echo "  make up [ENVIRONMENT=dev|stage|prod] - Start full stack in Docker for the environment"
@@ -236,6 +237,10 @@ secrets-check:
 secrets-add-recipient:
 	@test -n "$(NAME)" && test -n "$(KEY)" || { echo "usage: make secrets-add-recipient NAME=<them> KEY=age1..." >&2; exit 1; }
 	scripts/secrets.sh add-recipient "$(NAME)" "$(KEY)"
+
+secrets-remove-recipient:
+	@test -n "$(NAME)" || { echo "usage: make secrets-remove-recipient NAME=<them>" >&2; exit 1; }
+	scripts/secrets.sh remove-recipient "$(NAME)"
 
 # feat:if backend
 # Shared by gen-api-docs and check-api-docs so the two can never drift.

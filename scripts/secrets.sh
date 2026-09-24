@@ -23,6 +23,7 @@ set -euo pipefail
 # Usage:
 #   scripts/secrets.sh init <name> <age1...>        create .sops.yaml
 #   scripts/secrets.sh add-recipient <name> <age1...>
+#   scripts/secrets.sh remove-recipient <name>      re-key AND rotate data keys
 #   scripts/secrets.sh encrypt [env]                env/<env>/  -> env/sops/<env>/
 #   scripts/secrets.sh decrypt [env]                env/sops/<env>/ -> env/<env>/
 #   scripts/secrets.sh check                        fail on plaintext under env/sops/
@@ -91,7 +92,9 @@ cmd_init() {
 #
 # REMOVING one is not the reverse. They hold a clone, or held one, and every
 # value in it stays valid -- removal means rotating every secret they could
-# read. Keep this list to the people who genuinely need it.
+# read. Use the script, not a hand edit here, so the data keys rotate too:
+#   scripts/secrets.sh remove-recipient <name>
+# Keep this list to the people who genuinely need it.
 keys:
   - &$name $key
 
@@ -197,6 +200,55 @@ decrypting a real secret onto a shared screen is how one gets leaked.
 TXT
 }
 
+# Drops the key from .sops.yaml, then per file: `updatekeys` to take them off
+# the recipient list, and `rotate` to replace the data key.
+#
+# The rotate is the part that is easy to miss. updatekeys re-wraps the SAME data
+# key for the remaining recipients, and the removed operator can still unwrap
+# that key from any old version in git history with their own age key -- so
+# anything written into the file afterwards with `sops <file>` or `sops set`,
+# the rotated credentials included, stays readable to them. Order matters too:
+# rotate takes its recipients from the file, not from .sops.yaml, so without
+# updatekeys first it re-keys the file to the removed operator all over again.
+cmd_remove_recipient() {
+  need_sops; need_config
+  local name="${1:-}" key
+  [ -n "$name" ] || die "usage: scripts/secrets.sh remove-recipient <name>"
+  key="$(awk -v name="$name" '$1 == "-" && $2 == "&" name { print $3 }' "$SOPS_CONFIG")"
+  [ -n "$key" ] || die "no recipient named $name in $SOPS_CONFIG"
+  [ "$(grep -c '^  - &' "$SOPS_CONFIG")" -gt 1 ] \
+    || die "$name is the only recipient; removing them leaves nobody able to decrypt"
+
+  awk -v name="$name" '
+    $1 == "-" && ($2 == "&" name || $2 == "*" name) { next }
+    { print }
+  ' "$SOPS_CONFIG" > "$SOPS_CONFIG.tmp" && mv "$SOPS_CONFIG.tmp" "$SOPS_CONFIG"
+  ! grep -q "$key" "$SOPS_CONFIG" || die "$key is still in $SOPS_CONFIG; edit it by hand"
+  echo "removed $name from $SOPS_CONFIG"
+
+  if [ -d env/sops ]; then
+    while IFS= read -r f; do
+      local t; t="$(input_type_for "$f")"
+      "$SOPS" updatekeys -y --input-type "$t" "$f" >/dev/null 2>&1
+      "$SOPS" rotate -i --input-type "$t" --output-type "$t" "$f"
+      grep -q "$key" "$f" && die "$f still lists $name after re-keying"
+      echo "  re-keyed and rotated $f"
+    done < <(find env/sops -type f | sort)
+  fi
+
+  cat <<TXT
+
+Commit and merge this BEFORE rotating anything: a new value written into a file
+whose data key $name knows is a value $name can read.
+
+This stops $name reading future versions and nothing else. Every value they
+could ever read is still valid, so rotate each one where it is issued, then
+check the old one is refused. The files they could read, history included:
+
+  git log --all --name-only --format= -S "$key" | sort -u
+TXT
+}
+
 # The files to act on, relative to $1: everything under it, or just $FILES.
 list_files() {
   local base="$1" f
@@ -274,6 +326,7 @@ cmd_check() {
 case "${1:-}" in
   init)           shift; cmd_init "${1:-}" "${2:-}" ;;
   add-recipient)  shift; cmd_add_recipient "${1:-}" "${2:-}" ;;
+  remove-recipient) shift; cmd_remove_recipient "${1:-}" ;;
   encrypt)        cmd_encrypt ;;
   decrypt)        cmd_decrypt ;;
   check)          cmd_check ;;

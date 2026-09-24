@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- `make secrets-remove-recipient` (`scripts/secrets.sh remove-recipient`):
+  removing a recipient now also rotates each file's data key. Before this,
+  `docs/SECRETS.md` said to drop the key from `.sops.yaml` and re-key, but
+  `sops updatekeys` keeps the data key, so a removed operator could unwrap it
+  from an old version in git history and read values written into the file
+  afterwards with `sops set` or `sops <file>`, including the rotated ones.
+
 ### Added
 - SOPS + age for the env files that hold production credentials: ciphertext under
   `env/sops/<env>/` is committed, plaintext under `env/<env>/` is git-ignored by

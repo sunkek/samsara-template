@@ -109,13 +109,40 @@ that is being shared is a routine way to leak one.
 
 ## Removing an operator
 
-Dropping a key from `.sops.yaml` and re-encrypting stops them reading *future*
-versions and nothing else. They hold a clone, or held one, and every value in it
-is still valid.
+Removing a recipient stops them reading *future* versions and nothing else.
+They hold a clone, or held one, and every value in it is still valid.
 
 **Removing an operator means rotating every secret they could read.** That is
 expensive, and it is the argument for keeping the recipient list to the people
 who genuinely need it rather than everyone who might.
+
+Do it in this order:
+
+```bash
+make secrets-remove-recipient NAME=<them>   # .sops.yaml, then updatekeys + rotate per file
+make secrets-check
+git commit -am "chore(secrets): remove <them> as a recipient"   # merge this first
+```
+
+Then rotate each credential where it is issued, re-encrypt the new values, and
+check the old ones are refused. To list the files they could read, history
+included: `git log --all --name-only --format= -S "<their age1...>" | sort -u`.
+
+**Why the script and not a hand edit of `.sops.yaml`.** `sops updatekeys`, the
+command that grants access above, rewrites the recipient list and keeps the
+file's data key. The removed operator can unwrap that data key from any old
+version in git history with their own age key, and then read whatever is
+written into the file afterwards with `sops <file>` or `sops set` — including
+the rotated credentials that were supposed to lock them out.
+`remove-recipient` therefore also runs `sops rotate` on every file, which mints
+a new data key without touching the content. It runs `updatekeys` first
+because `rotate` takes its recipients from the file, not from `.sops.yaml`, and
+on its own would re-key the file to the removed operator again. `make
+secrets-encrypt` mints a fresh data key too, but files that are edited in place,
+or never re-encrypted like `roundtrip-check.env`, keep the old one.
+
+That is also why the recipient removal is merged before the first rotation: a
+new value written into a file whose data key they know is a value they can read.
 
 Rotation otherwise has no cadence and should not acquire a calendar one. Rotate
 on events: someone leaves, a credential appears on a screen or in a chat, a host
