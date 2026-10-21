@@ -46,10 +46,11 @@ git -C ../myapp status                 # review what the fork added and overwrot
 
 The template's `.git` is never copied and the destination's `.git` is never
 touched, so the repository keeps its history. A directory holding only `.git`
-(a fresh `git init`) needs no `-f`. Anything else there is merged: template
-files overwrite same-named ones (`README.md`, `.gitignore`, `LICENSE`, …), and
-the rename and the marker render run over the whole destination, so an existing
-file containing `my_project` / `MY_PROJECT` / `My Project` is rewritten too.
+(a fresh `git init`) needs no `-f`. The fork is built in a scratch directory
+and only then copied in, so the rename, the feature prune and the cleanup never
+touch the destination's own files. The one way the destination changes is the
+copy itself: fork files overwrite same-named ones (`README.md`, `.gitignore`,
+`LICENSE`, …), and nothing is deleted.
 
 `-d .` renames the template checkout in place, keeping the *template's* history
 and remote — not what you want for a new repository.

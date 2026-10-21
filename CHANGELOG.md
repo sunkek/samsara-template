@@ -52,9 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `bootstrap.sh -d <existing dir> -f` deleted the destination's `.git` (and its
-  own `env/<env>/` dirs and `node_modules`) after copying. The template's `.git`
-  and generated files are now excluded at copy time and nothing in the
-  destination is deleted; a directory holding only `.git` needs no `-f`.
+  own `env/<env>/` dirs and `node_modules`) after copying, and the feature prune,
+  empty-directory sweep and rename then ran over the destination's own files
+  too. The fork is now built in a scratch directory and copied in once
+  finished: nothing in the destination is deleted or rewritten except the
+  same-named files the fork overwrites. A directory holding only `.git` needs
+  no `-f`.
 - `-m` (Go module path) is no longer required or prompted for without the
   `backend` feature.
 - Forks' `shell` CI job ran `shellcheck … bootstrap.sh`, a file no fork has.

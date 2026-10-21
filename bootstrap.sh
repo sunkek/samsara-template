@@ -14,9 +14,11 @@
 # features you pick (-F), via scripts/apply_features.sh. `./bootstrap.sh -h`
 # prints the flags; docs/BOOTSTRAP.md has copy-paste commands per feature set.
 #
-# With -d the reference is copied to the destination and renamed there; the
-# original is left untouched (so you can fork it again). Without -d the current
-# checkout is renamed in place. The destination must be outside this directory.
+# With -d the fork is built in a scratch directory and then copied into the
+# destination, so the rename, the feature prune and the cleanup never touch
+# files the destination already had; the original is left untouched (so you can
+# fork it again). `-d .` renames the current checkout in place instead. Any
+# other destination must be outside this directory.
 set -euo pipefail
 
 # --- Source identity: what this repo is named right now. -----------------------
@@ -168,11 +170,14 @@ fi
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SELF="$(basename "$0")"
 
-# Resolve the target the rename is applied to. In place by default; with a
-# destination, copy the reference there and rename there, leaving the original
-# untouched.
+# Resolve the target and the work tree the rename is applied to. In place, both
+# are this checkout. With a destination, the reference is copied to a scratch
+# work tree and only the finished fork is copied into the destination: the prune
+# (`rm -rf services/backend`), the empty-dir sweep and the rename all run on the
+# work tree, so a destination that is an existing repository loses nothing.
 if [ -z "$DEST" ] || [ "$DEST" = "." ]; then
   TARGET="$ROOT"
+  WORK="$ROOT"
 else
   dest_parent="$(cd "$(dirname "$DEST")" 2>/dev/null && pwd)" \
     || { echo "Destination parent does not exist: $(dirname "$DEST")"; exit 1; }
@@ -200,11 +205,10 @@ else
     echo "Destination $TARGET non-empty; merging anyway (-f)."
   fi
   mkdir -p "$TARGET"
-  echo "Copying reference → $TARGET"
-  # What never leaves the template, excluded at copy time so nothing has to be
-  # deleted from the destination afterwards — the destination may be an existing
-  # repository, and its own .git, env files and node_modules are not ours to
-  # remove:
+  WORK="$(mktemp -d)"
+  trap 'rm -rf "$WORK"' EXIT
+  echo "Building the fork in $WORK"
+  # What never leaves the template, excluded at copy time:
   #   - VCS: the template's history is not the fork's;
   #   - deps and build output;
   #   - generated env files (secrets!) and env/sops/: env/example is the only
@@ -228,7 +232,7 @@ else
     name="$(basename "$d")"
     [ "$name" = example ] || excludes+=("--exclude=./env/$name")
   done
-  tar -C "$ROOT" "${excludes[@]}" -cf - . | tar -C "$TARGET" -xf -
+  tar -C "$ROOT" "${excludes[@]}" -cf - . | tar -C "$WORK" -xf -
 fi
 
 # Escape a string for the search (BRE) side of `s|…|…|`.
@@ -259,10 +263,10 @@ sed_author=(
 )
 
 # Rename in every file except VCS, deps, build output, and this script. Run from
-# TARGET with relative paths so exclusions anchor to the project, not to absolute
+# WORK with relative paths so exclusions anchor to the project, not to absolute
 # path components. bootstrap.sh excludes itself so its OLD_* identity stays
 # valid (and so it never rewrites itself mid-run).
-cd "$TARGET"
+cd "$WORK"
 find . -type f \
   -not -path './.git/*' \
   -not -path '*/node_modules/*' \
@@ -299,7 +303,7 @@ fi
 # The template gitignores services/backend/go.sum (its absence gates CI while
 # the repo is still the unbootstrapped template). The fork must commit go.sum,
 # so drop that ignore block here.
-sed -i '/^# The template ships without go\.sum/,/^services\/backend\/go\.sum$/d' "$TARGET/.gitignore"
+sed -i '/^# The template ships without go\.sum/,/^services\/backend\/go\.sum$/d' .gitignore
 
 # Cut the fork down to the chosen features, then drop the feature tooling: it is
 # a template-maintenance tool, and after this pass there are no markers left for
@@ -325,15 +329,30 @@ if [ "$TARGET" = "$ROOT" ]; then
 fi
 
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
-if [ -n "$VERIFY" ] && [ -d "$TARGET/services/backend" ]; then
+# Runs in the work tree, so the go.sum it writes ships with the fork.
+if [ -n "$VERIFY" ] && [ -d services/backend ]; then
   echo "Verifying build (go build ./...) ..."
   if command -v go >/dev/null 2>&1; then
-    ( cd "$TARGET/services/backend" && go mod tidy && go build ./... ) \
+    ( cd services/backend && go mod tidy && go build ./... ) \
       && echo "Build OK." \
-      || { echo "ERROR: fork does not build — see output above." >&2; exit 1; }
+      || { echo "ERROR: fork does not build — see output above." >&2
+           [ "$WORK" = "$TARGET" ] || echo "Nothing was written to $TARGET." >&2
+           exit 1; }
   else
     echo "WARNING: go not found on PATH; skipping build verification." >&2
   fi
+fi
+
+# Hand the finished fork to the destination. Only files the fork has are
+# written; same-named files there are overwritten, nothing else is touched.
+# The top-level entries are archived by name rather than as `.`, so extracting
+# does not reset the destination directory's own mode.
+if [ "$WORK" != "$TARGET" ]; then
+  echo "Copying the fork → $TARGET"
+  shopt -s dotglob
+  entries=(*)
+  shopt -u dotglob
+  tar -cf - -- "${entries[@]}" | tar -C "$TARGET" -xf -
 fi
 
 # Nudge if the security/contact email is still a placeholder — it lands in
@@ -345,14 +364,14 @@ esac
 
 echo "Done. Next:"
 [ "$TARGET" = "$ROOT" ] || echo "  cd $TARGET"
-if [ -d "$TARGET/services/backend" ]; then
+if [ -d services/backend ]; then
   echo "  (cd services/backend && go mod tidy)    # commit go.sum: CI is gated on it"
 fi
-if [ -d "$TARGET/services/frontend" ]; then
+if [ -d services/frontend ]; then
   echo "  (cd services/frontend && npm install)"
 fi
 echo "  docker network create dev   # if not already"
 echo "  make gen-env APP=$APP_NAME   # fills env/dev + env/local"
-if [ -f "$TARGET/POST-FORK.md" ]; then
+if [ -f POST-FORK.md ]; then
   echo "  review the docs listed in POST-FORK.md, then delete it"
 fi
