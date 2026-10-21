@@ -123,11 +123,18 @@ stage/prod separately for distinct secrets: `make gen-env GEN_ENVS=prod APP=…`
 they are set to and is git-ignored by directory. Add a variable in one step
 instead of four:
 
+<!-- feat:if backend -->
 ```bash
 make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
 make env-add FILE=api.env NAME=MY_PROJECT_API_STRIPE_KEY SECRET=1 ENVS=prod
 make env-sync                    # after pulling someone else's new variable
 ```
+<!-- feat:else -->
+<!--~ ```bash -->
+<!--~ make env-add FILE=ports.env NAME=MY_PROJECT_PREVIEW_PORT VALUE=4173 -->
+<!--~ make env-sync                    # after pulling someone else's new variable -->
+<!--~ ``` -->
+<!-- feat:end -->
 
 For values that open production, the repository is wired for
 [SOPS](https://github.com/getsops/sops) with age: ciphertext under `env/sops/`

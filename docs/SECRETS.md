@@ -17,11 +17,22 @@ costs nothing.
 
 ## Adding a variable
 
+<!-- feat:if backend -->
 ```bash
 make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
 make env-add FILE=api.env NAME=MY_PROJECT_API_STRIPE_KEY SECRET=1 ENVS=prod
 make env-sync                      # after pulling someone else's new variable
 ```
+<!-- feat:else -->
+<!--~ ```bash -->
+<!--~ make env-add FILE=ports.env NAME=MY_PROJECT_PREVIEW_PORT VALUE=4173 -->
+<!--~ make env-add FILE=deploy.env NAME=MY_PROJECT_DEPLOY_TOKEN SECRET=1 ENVS=prod -->
+<!--~ make env-sync                      # after pulling someone else's new variable -->
+<!--~ ``` -->
+<!--~  -->
+<!--~ `env-add` extends a file `env/example/` already has; create a new one -->
+<!--~ (`deploy.env` above) there first. -->
+<!-- feat:end -->
 
 `env-add` writes the variable to `env/example/` *and* to every environment that
 has that file, then re-encrypts whichever of them are committed as ciphertext.
@@ -99,7 +110,11 @@ Then have them prove it on their own machine, both files, in this order:
 
 ```bash
 sops -d env/sops/prod/roundtrip-check.env            # their key works
+<!-- feat:if backend -->
 sops -d env/sops/prod/api.env >/dev/null && echo OK  # the real files were re-keyed
+<!-- feat:else -->
+<!--~ sops -d env/sops/prod/ports.env >/dev/null && echo OK  # the real files were re-keyed -->
+<!-- feat:end -->
 ```
 
 The first proves the key and nothing about the real files — `roundtrip-check`
@@ -162,6 +177,7 @@ make secrets-decrypt ENVIRONMENT=dev FILES="smtp.env" FORCE=1
 written a placeholder at that path. It is opt-in for a reason: a local file may
 hold a value that was never encrypted, and overwriting it loses the only copy.
 
+<!-- feat:if backend -->
 One file per credential-owning service beats mixing real and generated values in
 `api.env` — it keeps the blast radius of a forced decrypt to the file that is
 genuinely shared. Compose reads a second file with no ceremony, and
@@ -174,6 +190,19 @@ has no age key:
       - path: ../env/${ENVIRONMENT:-dev}/smtp.env
         required: false
 ```
+<!-- feat:else -->
+<!--~ One file per credential-owning service beats mixing real and generated values -->
+<!--~ in one shared file — it keeps the blast radius of a forced decrypt to the file -->
+<!--~ that is genuinely shared. Compose reads it with no ceremony, and -->
+<!--~ `required: false` (Compose 2.24+) keeps the stack starting for a developer who -->
+<!--~ has no age key: -->
+<!--~  -->
+<!--~ ```yaml -->
+<!--~     env_file: -->
+<!--~       - path: ../env/${ENVIRONMENT:-dev}/smtp.env -->
+<!--~         required: false -->
+<!--~ ``` -->
+<!-- feat:end -->
 
 The alternative is `encrypted_regex` in `.sops.yaml`, which encrypts only the
 matching variables and leaves the rest readable in git (sops matches with RE2,

@@ -48,7 +48,7 @@ COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] &
 help:
 	@echo "Targets:"
 	@echo "  make gen-env APP=<name>       - Materialize env/<env>/*.env with fresh secrets"
-	@echo "  make env-add FILE=api.env NAME=X [VALUE=y] [SECRET=1] [ENVS=\"dev prod\"]"
+	@echo "  make env-add FILE=<f>.env NAME=X [VALUE=y] [SECRET=1] [ENVS=\"dev prod\"]"
 	@echo "                                - Add one variable to the template and every environment"
 	@echo "  make env-sync [ENVS=\"dev\"]     - Add variables new to env/example/, keep existing values"
 	@echo "  make secrets-init NAME=<you> KEY=age1... - Create .sops.yaml"
@@ -185,8 +185,13 @@ gen-key-b64:
 # and a re-encrypt of whichever of them are committed as ciphertext -- and it is
 # easy to do three of them. env.sh does all four.
 #
+# feat:if backend
 #   make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
 #   make env-add FILE=api.env NAME=MY_PROJECT_API_STRIPE_KEY SECRET=1 ENVS=prod
+# feat:else
+#~ #   make env-add FILE=ports.env NAME=MY_PROJECT_PREVIEW_PORT VALUE=4173
+#~ #   make env-add FILE=deploy.env NAME=MY_PROJECT_DEPLOY_TOKEN SECRET=1 ENVS=prod
+# feat:end
 #
 # SECRET=1 puts the `password` placeholder in env/example/ (which is what
 # gen-env recognises) and mints a DIFFERENT value per environment: a prod

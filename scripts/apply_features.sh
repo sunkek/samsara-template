@@ -67,11 +67,13 @@ echo "Pruning for: $FEATS"
 prune frontend \
   services/frontend
 
+# docs/SECRETS.md is not in this list: env files and SOPS apply to every fork.
 prune backend \
   services/backend \
   services/frontend/config \
   env/example/api.env \
-  docs
+  docs/ARCHITECTURE.md \
+  docs/adr
 
 prune postgresql \
   services/backend/internal/domain/note \

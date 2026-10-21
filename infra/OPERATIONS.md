@@ -40,10 +40,17 @@ fails to authenticate against its own infra (SQLSTATE 28P01).
 Add a variable with `make env-add` rather than by hand — it writes the template
 and every environment in one step, and re-encrypts whatever is committed:
 
+<!-- feat:if backend -->
 ```bash
 make env-add FILE=api.env NAME=MY_PROJECT_API_FEATURE_X VALUE=false
 make env-sync                    # after pulling someone else's new variable
 ```
+<!-- feat:else -->
+<!--~ ```bash -->
+<!--~ make env-add FILE=ports.env NAME=MY_PROJECT_PREVIEW_PORT VALUE=4173 -->
+<!--~ make env-sync                    # after pulling someone else's new variable -->
+<!--~ ``` -->
+<!-- feat:end -->
 
 Values that open production are encrypted in git with SOPS and age: ciphertext
 under `env/sops/<env>/`, plaintext never committed, `make secrets-check` failing
