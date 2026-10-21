@@ -74,6 +74,14 @@ every `docker compose` call and before the local `air` launch. Editing one
 variable therefore shifts both the published host port and the port the backend
 connects to. Change them here to coexist with other projects holding the
 defaults; container-internal ports stay standard.
+<!-- feat:if frontend -->
+
+The frontend has two: `MY_PROJECT_FRONTEND_PORT` (default 5173) publishes the
+vite dev server in `dev`, and `MY_PROJECT_FRONTEND_NGINX_PORT` (default 8080)
+publishes nginx in `stage` and `prod`. Every environment's `ports.env` is
+generated from the same template, so one shared variable would put prod nginx
+on the vite port.
+<!-- feat:end -->
 
 ## Deploying
 

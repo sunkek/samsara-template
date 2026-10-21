@@ -152,7 +152,7 @@ Optional — a fork that deploys nothing can ignore it. See
 and remove an operator, and why removal means rotation.
 
 <!-- feat:if frontend -->
-- Frontend: http://localhost:5173 (dev server) or the published nginx port under `stage`/`prod`.
+- Frontend: http://localhost:5173 (dev server) or the nginx port under `stage`/`prod` (`MY_PROJECT_FRONTEND_NGINX_PORT`, default 8080).
 <!-- feat:end -->
 
 <!-- feat:if backend -->
