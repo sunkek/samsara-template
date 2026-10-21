@@ -155,6 +155,22 @@ check "leader: html comment" "backend" \
 <!-- feat:end -->' \
 'no frontend'
 
+check "html: else marker closes like the others" "backend" \
+'<!-- feat:if frontend -->
+spa
+<!-- feat:else -->
+<!--~ no spa -->
+<!-- feat:end -->' \
+'no spa'
+
+check "html: else marker, if branch taken" "frontend" \
+'<!-- feat:if frontend -->
+spa
+<!-- feat:else -->
+<!--~ no spa -->
+<!-- feat:end -->' \
+'spa'
+
 check "no leader: line is emitted verbatim" "redis" \
 '# feat:if redis
 plain ~ tilde stays
