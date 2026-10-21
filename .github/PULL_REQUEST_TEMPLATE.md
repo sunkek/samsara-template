@@ -15,12 +15,24 @@ See CONTRIBUTING.md and AGENTS.md for conventions.
 
 ## Checklist
 
+<!-- feat:if backend -->
 - [ ] `cd services/backend && gofmt -l . && go vet ./... && go test ./...` passes
+<!-- feat:end -->
+<!-- feat:if frontend -->
 - [ ] `cd services/frontend && npm run lint && npm test && npm run build` passes
+<!-- feat:end -->
+<!-- feat:if backend -->
 - [ ] Swagger regenerated if API handlers changed (`make gen-api-docs`)
+<!-- feat:end -->
+<!-- feat:if backend,postgresql -->
 - [ ] Migration committed alongside the Go code that needs it (if any)
+<!-- feat:end -->
 - [ ] Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) stay in sync
+<!-- feat:if backend -->
 - [ ] Docs updated where the change lands (`docs/ARCHITECTURE.md`, `infra/OPERATIONS.md`)
+<!-- feat:else -->
+<!--~ - [ ] Docs updated where the change lands (`infra/OPERATIONS.md`, `README.md`) -->
+<!-- feat:end -->
 
 ## Notes for reviewers
 
