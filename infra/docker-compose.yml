@@ -3,9 +3,12 @@
 # healthchecks — live in docker-compose.<env>.yml overrides, merged via
 #   docker compose -f docker-compose.yml -f docker-compose.$ENVIRONMENT.yml ...
 # (see `make up`). Container and volume names are scoped by $ENVIRONMENT so
-# multiple environments don't collide; services reach each other by the stable
-# network aliases (postgresql / rabbitmq / redis / backend), which also match
-# the backend's config defaults.
+# multiple environments don't collide; services reach each other by stable
+# network aliases, never by container name.
+# feat:if backend
+# The aliases (postgresql / rabbitmq / redis / backend) also match the
+# backend's config defaults.
+# feat:end
 networks:
   dev:
     external: true

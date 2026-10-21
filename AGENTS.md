@@ -59,4 +59,8 @@ leaders, Make recipes).
 
 `type(scope): short summary` — e.g. `feat(note): add tag filtering to list endpoint`
 
+<!-- feat:if backend,postgresql -->
 Keep commits atomic. Include migration files in the same commit as the Go code that requires them.
+<!-- feat:else -->
+<!--~ Keep commits atomic. -->
+<!-- feat:end -->

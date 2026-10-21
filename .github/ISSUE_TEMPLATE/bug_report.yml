@@ -42,8 +42,22 @@ body:
     id: env
     attributes:
       label: Environment
+# feat:if backend,frontend
       description: OS, Docker version, Go version, Node version.
       placeholder: "Ubuntu 24.04, Docker 27.3, Go 1.26.1, Node 22.9"
+# feat:end
+# feat:if backend,!frontend
+#~       description: OS, Docker version, Go version.
+#~       placeholder: "Ubuntu 24.04, Docker 27.3, Go 1.26.1"
+# feat:end
+# feat:if frontend,!backend
+#~       description: OS, Docker version, Node version.
+#~       placeholder: "Ubuntu 24.04, Docker 27.3, Node 22.9"
+# feat:end
+# feat:if !backend,!frontend
+#~       description: OS, Docker version.
+#~       placeholder: "Ubuntu 24.04, Docker 27.3"
+# feat:end
     validations:
       required: true
   - type: input
