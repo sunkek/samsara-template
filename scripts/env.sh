@@ -173,5 +173,5 @@ cmd_sync() {
 case "${1:-}" in
   add)  shift; cmd_add "$@" ;;
   sync) shift; cmd_sync "$@" ;;
-  *) sed -n '/^# env.sh --/,/^$/p;/^#   scripts/,/^#   scripts.env.sh sync$/p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1 ;;
+  *) sed -n '/^# env.sh --/,/^$/p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1 ;;
 esac
