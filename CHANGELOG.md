@@ -68,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Docker entries in Dependabot, a CLAUDE.md describing a Go backend, and
   backend/Postgres prose in `infra/OPERATIONS.md`.
 - `index.html` linked a `/favicon.svg` that did not exist.
+- Forks kept the other stack's `.gitignore` entries (Go binaries and workspace
+  files without `backend`, `node_modules/`/`dist/` without `frontend`), and the
+  prod compose's image-pinning note and proxy-trust comment named Postgres,
+  Redis and the frontend nginx in forks without them.
+- `POST-FORK.md` now says which features the fork kept and what to look for.
 - `articlestats` read model returned an error for every non-empty projection:
   the `COALESCE` in its `SELECT` was unaliased, so the column came back as
   `coalesce` and matched no field. Found by the new adapter integration tests.

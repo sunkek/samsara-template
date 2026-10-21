@@ -173,9 +173,10 @@ if [ -n "$changed_docs" ]; then
   {
     echo "# Post-fork check"
     echo
-    echo "Forking with features \`${FEATS:-<none>}\` cut feature-specific prose out of"
-    echo "these documents. Read each one and confirm it describes the project you now"
-    echo "have, then delete this file."
+    echo "This fork keeps the features \`${FEATS:-<none>}\`. Bootstrapping removed the"
+    echo "prose about every other feature from the documents below, which can leave a"
+    echo "sentence or a list reading oddly. Read each one, fix what no longer describes"
+    echo "this project, then delete this file."
     echo
     for d in $changed_docs; do echo "- \`$d\`"; done
   } > POST-FORK.md

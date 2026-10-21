@@ -17,13 +17,18 @@
 # feat:if !backend,!frontend
 #~ # Prod override: production resource limits. Merged on docker-compose.yml.
 # feat:end
+# feat:if postgresql|redis|rabbitmq
 #
 # Reproducibility note: the base compose pins image *minor* tags (postgres:18,
 # redis:8, …). For a hardened prod deploy, pin them by digest instead
 # (e.g. `image: postgres:18@sha256:<digest>`) so a re-pull cannot drift. Resolve
 # digests in your release pipeline (`docker buildx imagetools inspect <ref>`).
-# An override with no services at all is not a valid compose file; the
-# empty mapping keeps `make up` working on an infra-only scaffold.
+# feat:end
+# feat:if !backend,!frontend,!postgresql,!rabbitmq,!redis
+#~ #
+#~ # An override with no services at all is not a valid compose file; the
+#~ # empty mapping keeps `make up` working on a scaffold with no services.
+# feat:end
 # feat:if backend|frontend|postgresql|rabbitmq|redis
 services:
 # feat:else
@@ -35,12 +40,21 @@ services:
       context: ../services/backend
       dockerfile: .docker/Dockerfile.prod
     environment:
+# feat:if frontend
       # The backend is not published here — every request arrives through the
       # frontend's nginx. Without proxy trust, c.IP() is nginx's address for all
       # of them, so the per-IP rate limiter degrades into one shared bucket and
-      # a single caller can lock every user out of /auth. nginx overwrites
+      # a single caller can exhaust it for every user. nginx overwrites
       # X-Forwarded-For (see services/frontend/.docker/nginx.conf), which is what
       # makes reading it safe.
+# feat:else
+#~       # The backend is not published here — every request arrives through your
+#~       # reverse proxy. Without proxy trust, c.IP() is the proxy's address for
+#~       # all of them, so the per-IP rate limiter degrades into one shared bucket
+#~       # and a single caller can exhaust it for every user. Reading
+#~       # X-Forwarded-For is safe only if that proxy overwrites it rather than
+#~       # appending to what the client sent.
+# feat:end
       MY_PROJECT_API_FIBER_TRUST_PROXY: "true"
       # The compose bridge network. Narrow it if you know the subnet exactly.
       MY_PROJECT_API_FIBER_TRUSTED_PROXIES: "172.16.0.0/12"
