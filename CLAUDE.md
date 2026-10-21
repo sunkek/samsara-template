@@ -40,6 +40,9 @@ slice. Replace them with your own; they exist to be read and then deleted.
   `make env-sync`) and how the ones that open production are encrypted with SOPS
   and age. Read it before adding a variable or touching `env/sops/`.
 <!-- feat:if template -->
+- **`docs/BOOTSTRAP.md`** — creating a new repository from this template:
+  the `./bootstrap.sh -y` command per feature set and the steps after. Read it
+  first when asked to start a project from the template.
 - **`docs/FEATURES.md`** — feature-marker syntax and the rules for editing a
   marked file. Read it before editing any file carrying `feat:if` comments.
 <!-- feat:end -->

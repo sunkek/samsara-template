@@ -9,6 +9,9 @@
 > parts you want — `backend`, `frontend`, `postgresql`, `redis`, `rabbitmq` — deleting
 > the adapters, compose services, env vars, migrations and CI jobs of everything
 > else. See *Choosing features* below.
+>
+> **Creating a repo from a script or an agent?** [`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md)
+> has the one-line `./bootstrap.sh -y …` command per feature set and the steps after.
 <!-- TEMPLATE-BANNER:END -->
 
 # My Project
@@ -59,6 +62,11 @@ compose services, and no env vars for infra you do not run:
 ./bootstrap.sh -d ../spa  -F frontend                    # just the React SPA
 ./bootstrap.sh -d ../full                                # everything (the default)
 ```
+
+Values not given as flags are prompted for; `-y` never prompts, for scripts
+and agents. [`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md) has the exact
+non-interactive command per feature set, bootstrapping into an existing git
+repository, the steps after, and how to verify the fork.
 
 | Feature | Dropping it means |
 |---|---|

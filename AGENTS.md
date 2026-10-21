@@ -40,6 +40,12 @@ See `CLAUDE.md` for the project overview and the map of the other docs, and
 <!-- feat:end -->
 
 <!-- feat:if template -->
+## Creating a project from this template (template only)
+
+Follow [`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md): one non-interactive
+`./bootstrap.sh -y …` command per feature set, then the post-bootstrap and
+verification steps. Do not read the rest of the template first.
+
 ## Feature markers (template only)
 
 Files carry `feat:if` / `feat:else` / `feat:end` comments that
