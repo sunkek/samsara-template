@@ -1,6 +1,9 @@
-# Build the SPA, then serve the static bundle with nginx. nginx also proxies
-# /api to the backend container (alias "backend"), so the app is same-origin
-# and the SPA can use a relative /api/v1 base (see vite.config.ts).
+# Build the SPA, then serve the static bundle with nginx.
+# feat:if backend
+# nginx also proxies /api to the backend container (alias "backend"), so the
+# app is same-origin and the SPA can use a relative /api/v1 base (see
+# vite.config.ts).
+# feat:end
 FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./

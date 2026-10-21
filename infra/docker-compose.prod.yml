@@ -1,7 +1,22 @@
+# feat:if backend,frontend
 # Prod override: built images, no source mounts. Backend is the scratch binary
 # (Dockerfile.prod); frontend is the vite build served by nginx, which proxies
 # /api to the backend (same origin). Only the frontend is published; the
 # backend is reachable only inside the network. Merged on docker-compose.yml.
+# feat:end
+# feat:if backend,!frontend
+#~ # Prod override: built images, no source mounts. Backend is the scratch binary
+#~ # (Dockerfile.prod). Nothing is published: the backend is reachable only inside
+#~ # the network, so put your reverse proxy on it (and match TRUSTED_PROXIES to
+#~ # it) before exposing it. Merged on docker-compose.yml.
+# feat:end
+# feat:if frontend,!backend
+#~ # Prod override: built images, no source mounts. Frontend is the vite build
+#~ # served by nginx, the only published service. Merged on docker-compose.yml.
+# feat:end
+# feat:if !backend,!frontend
+#~ # Prod override: production resource limits. Merged on docker-compose.yml.
+# feat:end
 #
 # Reproducibility note: the base compose pins image *minor* tags (postgres:18,
 # redis:8, …). For a hardened prod deploy, pin them by digest instead

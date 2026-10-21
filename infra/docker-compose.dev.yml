@@ -1,5 +1,18 @@
+# feat:if backend,frontend
 # Dev override: hot reload. Backend runs air, frontend runs the vite dev
 # server, both with source mounted. Merged on top of docker-compose.yml.
+# feat:end
+# feat:if backend,!frontend
+#~ # Dev override: hot reload. Backend runs air with source mounted. Merged on
+#~ # top of docker-compose.yml.
+# feat:end
+# feat:if frontend,!backend
+#~ # Dev override: hot reload. Frontend runs the vite dev server with source
+#~ # mounted. Merged on top of docker-compose.yml.
+# feat:end
+# feat:if !backend,!frontend
+#~ # Dev override, merged on top of docker-compose.yml.
+# feat:end
 # An override with no services at all is not a valid compose file; the
 # empty mapping keeps `make up` working on an infra-only scaffold.
 # feat:if backend|frontend
@@ -30,10 +43,12 @@ services:
     build:
       context: ../services/frontend
       dockerfile: .docker/Dockerfile.dev
+    # feat:if backend
     environment:
       # vite dev server proxies /api to the backend container (see
       # vite.config.ts); the SPA itself uses the relative /api/v1 base.
       MY_PROJECT_API_PROXY_TARGET: "http://backend:8000"
+    # feat:end
     ports:
       - "127.0.0.1:${MY_PROJECT_FRONTEND_PORT:-5173}:5173"
     volumes:

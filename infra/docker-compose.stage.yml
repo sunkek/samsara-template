@@ -1,4 +1,8 @@
+# feat:if frontend
 # Stage override: same shape as prod (built images, nginx-served frontend), but
+# feat:else
+#~ # Stage override: same shape as prod (built images), but
+# feat:end
 # driven by env/stage/*. Diverge from prod here as your staging needs grow
 # (resource limits, replicas, different published port, etc.). Merged on
 # docker-compose.yml.
