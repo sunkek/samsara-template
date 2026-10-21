@@ -42,8 +42,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `infra/OPERATIONS.md`: deployment (including the migrate-before-`up` ordering
   and why CI must not carry plaintext env files), backup and restore, and where
   to look for logs and health.
+- `bootstrap.sh -y`: non-interactive — never prompts, and fails listing every
+  missing required value instead. `-h` prints the flags and feature names
+  (it used to print every comment in the script).
+- `docs/BOOTSTRAP.md` (template-only): the exact `bootstrap.sh -y` command per
+  common feature set, bootstrapping into an existing git repository, the steps
+  after, and how to verify the fork.
+- `<PREFIX>_FRONTEND_NGINX_PORT` (default 8080) publishes the stage/prod nginx.
 
 ### Fixed
+- `bootstrap.sh -d <existing dir> -f` deleted the destination's `.git` (and its
+  own `env/<env>/` dirs and `node_modules`) after copying. The template's `.git`
+  and generated files are now excluded at copy time and nothing in the
+  destination is deleted; a directory holding only `.git` needs no `-f`.
+- `-m` (Go module path) is no longer required or prompted for without the
+  `backend` feature.
+- Forks' `shell` CI job ran `shellcheck … bootstrap.sh`, a file no fork has.
+- Forks without `backend` lost `docs/SECRETS.md` (the whole `docs/` dir was
+  pruned) while four files still linked it. It now ships in every fork.
+- stage/prod nginx was published on the vite dev port: every `ports.env` sets
+  `FRONTEND_PORT=5173`, so the compose default of 8080 never applied.
+- `<!-- feat:else -->` was not recognised, so Markdown else branches were dropped.
+- Frontend-only forks carried backend leftovers: the dev proxy target in the dev
+  compose, Go/Swagger/migration lines in the PR template, gomod and backend
+  Docker entries in Dependabot, a CLAUDE.md describing a Go backend, and
+  backend/Postgres prose in `infra/OPERATIONS.md`.
+- `index.html` linked a `/favicon.svg` that did not exist.
 - `articlestats` read model returned an error for every non-empty projection:
   the `COALESCE` in its `SELECT` was unaliased, so the column came back as
   `coalesce` and matched no field. Found by the new adapter integration tests.
