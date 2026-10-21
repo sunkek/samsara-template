@@ -152,9 +152,15 @@ jobs:
         run: npm run build
   # feat:end
 
+  # feat:if template
   # The repository ships bash: bootstrap.sh is the first thing an adopter runs,
   # and scripts/ carries the feature renderer and the secret handling. shellcheck
   # is preinstalled on GitHub runners, so this costs a few seconds.
+  # feat:else
+  #~ # The repository ships bash: scripts/ carries the env-file and secret
+  #~ # handling. shellcheck is preinstalled on GitHub runners, so this costs a few
+  #~ # seconds.
+  # feat:end
   #
   # Severity is `warning`: info-level notes here are style opinions
   # (SC2012, SC2015), and a lint that fires on taste gets ignored, not fixed.
@@ -163,7 +169,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: shellcheck
+# feat:if template
         run: shellcheck -x -S warning bootstrap.sh scripts/*.sh
+# feat:else
+#~         run: shellcheck -x -S warning scripts/*.sh
+# feat:end
 
   # Secrets hygiene. Runs everywhere, needs no age key and cannot decrypt
   # anything: both questions below are answerable from the ciphertext and the

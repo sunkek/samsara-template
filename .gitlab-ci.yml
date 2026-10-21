@@ -149,4 +149,8 @@ shell:
   stage: test
   image: koalaman/shellcheck-alpine:stable
   script:
+# feat:if template
     - shellcheck -x -S warning bootstrap.sh scripts/*.sh
+# feat:else
+#~     - shellcheck -x -S warning scripts/*.sh
+# feat:end
