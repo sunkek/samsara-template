@@ -40,12 +40,18 @@ env/*
 !env/example/**
 !env/sops
 !env/sops/**
+# feat:if rabbitmq
 infra/rabbitmq/definitions.json
+# feat:end
+# feat:if redis
 infra/redis/redis.conf
+# feat:end
 .codex
+# feat:if backend
 
 # Build outputs
 services/backend/main
+# feat:end
 
 # The template ships without go.sum — its absence is the CI "unbootstrapped"
 # gate signal (see .github/workflows/ci.yml / .gitlab-ci.yml). bootstrap.sh

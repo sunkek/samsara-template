@@ -173,9 +173,9 @@ if [ -n "$changed_docs" ]; then
   {
     echo "# Post-fork check"
     echo
-    echo "\`apply_features.sh -f $FEATS\` cut feature-specific prose out of these"
-    echo "documents. Read each one and confirm it describes the project you now have,"
-    echo "then delete this file."
+    echo "Forking with features \`${FEATS:-<none>}\` cut feature-specific prose out of"
+    echo "these documents. Read each one and confirm it describes the project you now"
+    echo "have, then delete this file."
     echo
     for d in $changed_docs; do echo "- \`$d\`"; done
   } > POST-FORK.md

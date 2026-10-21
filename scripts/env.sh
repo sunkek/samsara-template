@@ -30,8 +30,13 @@ set -euo pipefail
 #       `secrets.sh decrypt` of a file older than the template.
 #
 # Examples:
+# feat:if backend
 #   scripts/env.sh add api.env MY_PROJECT_API_FEATURE_X_ENABLED false
 #   scripts/env.sh add api.env MY_PROJECT_API_STRIPE_KEY --secret --envs prod
+# feat:else
+#~ #   scripts/env.sh add ports.env MY_PROJECT_PREVIEW_PORT 4173
+#~ #   scripts/env.sh add deploy.env MY_PROJECT_DEPLOY_TOKEN --secret --envs prod
+# feat:end
 #   scripts/env.sh sync
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
