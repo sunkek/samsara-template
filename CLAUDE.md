@@ -4,10 +4,22 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this is
 
-My Project is built on the `samsara` component supervisor. Which pieces it has —
-Go backend, React/Vite SPA, Postgres, Redis, RabbitMQ — you can read off
-`services/` and `infra/` faster than this file could tell you, and unlike this
-file they cannot go stale.
+<!-- feat:if backend,frontend -->
+My Project is a Go backend built on the `samsara` component supervisor, with a
+React/Vite SPA in front of it.
+<!-- feat:end -->
+<!-- feat:if backend,!frontend -->
+<!--~ My Project is a Go service built on the `samsara` component supervisor. -->
+<!-- feat:end -->
+<!-- feat:if frontend,!backend -->
+<!--~ My Project is a React + Vite + TypeScript single-page app. -->
+<!-- feat:end -->
+<!-- feat:if !backend,!frontend -->
+<!--~ My Project is an infrastructure-only scaffold: Docker Compose stacks, -->
+<!--~ per-environment env files and CI. -->
+<!-- feat:end -->
+Which infrastructure it runs on you can read off `infra/` faster than this file
+could tell you, and unlike this file it cannot go stale.
 
 <!-- feat:if postgresql -->
 The domains under `internal/domain/` are samples demonstrating the vertical
