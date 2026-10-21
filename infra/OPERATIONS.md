@@ -13,10 +13,13 @@ container names.
 <!-- feat:if backend -->
 - `stage` / `prod` build the backend from `Dockerfile.prod` (scratch + `/health`).
 <!-- feat:end -->
-<!-- feat:if frontend -->
+<!-- feat:if frontend,backend -->
 - `stage` / `prod` build the frontend as nginx serving `dist/` and proxying
   `/api` to the `backend` alias, so the SPA stays same-origin on a relative
   `/api/v1` base.
+<!-- feat:end -->
+<!-- feat:if frontend,!backend -->
+<!--~ - `stage` / `prod` build the frontend as nginx serving `dist/`. -->
 <!-- feat:end -->
 
 ## Env files and secrets
@@ -24,19 +27,26 @@ container names.
 `make gen-env APP=<name>` materializes `env/<env>/*.env` from `env/example/`,
 replacing placeholders with random secrets. `GEN_ENVS` (default `dev local`)
 picks which environments a run materializes, and every environment in one run
+<!-- feat:if backend -->
 **shares one secret pool** — that is deliberate, because `make run-local`
 brings infra up from `env/dev` while loading the backend from `env/local`.
+<!-- feat:else -->
+<!--~ **shares one secret pool** — that is deliberate, because `make run-local` -->
+<!--~ reads `env/local` while the Docker stack it talks to reads `env/dev`. -->
+<!-- feat:end -->
 Generate stage and prod in separate invocations so they get distinct secrets:
 
 ```bash
 make gen-env GEN_ENVS=prod APP=my_project
 ```
 
+<!-- feat:if backend,postgresql -->
 The same logical credential lives in two files (the Postgres app password is
 `APP_PASSWORD` in `postgresql.env` and `_API_POSTGRESQL_PASS` in `api.env`), so
 secrets are mapped by variable name *and* file. Get that wrong and the backend
 fails to authenticate against its own infra (SQLSTATE 28P01).
 
+<!-- feat:end -->
 Add a variable with `make env-add` rather than by hand — it writes the template
 and every environment in one step, and re-encrypts whatever is committed:
 
@@ -69,11 +79,17 @@ nothing can ignore it and keep using `gen-env`.
 
 ## Host ports
 
+<!-- feat:if backend -->
 Host-side ports live in `env/<env>/ports.env`, sourced by the Makefile before
 every `docker compose` call and before the local `air` launch. Editing one
 variable therefore shifts both the published host port and the port the backend
 connects to. Change them here to coexist with other projects holding the
 defaults; container-internal ports stay standard.
+<!-- feat:else -->
+<!--~ Host-side ports live in `env/<env>/ports.env`, sourced by the Makefile before -->
+<!--~ every `docker compose` call. Change them here to coexist with other projects -->
+<!--~ holding the defaults; container-internal ports stay standard. -->
+<!-- feat:end -->
 <!-- feat:if frontend -->
 
 The frontend has two: `MY_PROJECT_FRONTEND_PORT` (default 5173) publishes the
@@ -99,27 +115,41 @@ docker network create dev
 # every release
 git pull
 make secrets-decrypt FORCE=1     # only if the encrypted env files changed
+<!-- feat:if postgresql -->
 make migrate-up ENVIRONMENT=prod
+<!-- feat:end -->
 make up ENVIRONMENT=prod
 ```
+<!-- feat:if postgresql -->
 
 Order matters: **migrations run before the new image starts.** A container that
 boots against a schema it expects to have been migrated will fail its
 healthcheck, and `make up` will have replaced the running one by then.
+<!-- feat:end -->
 
 Two properties worth preserving in whatever CI you wire this into:
 
 - **Never send `env/<env>/` to the host from CI.** The host decrypts it, or it
   was placed there once by hand. A pipeline that carries plaintext secrets makes
   every CI variable and every job log part of the blast radius.
+<!-- feat:if postgresql -->
 - **Keep deploy jobs uninterruptible.** A cancelled test costs nothing; a
   cancelled deploy leaves a half-migrated database.
+<!-- feat:else -->
+<!--~ - **Keep deploy jobs uninterruptible.** A cancelled test costs nothing; a -->
+<!--~   cancelled deploy leaves a half-updated stack. -->
+<!-- feat:end -->
 
+<!-- feat:if postgresql -->
 Rolling back is `git checkout <previous tag> && make up ENVIRONMENT=prod`, which
 covers code but **not** a migration that has already run — an `up` migration
 that drops or rewrites data is not undone by starting the old image. Write
 reversible migrations, and keep a dump from immediately before a destructive
 one (below).
+<!-- feat:else -->
+<!--~ Rolling back is `git checkout <previous tag> && make up ENVIRONMENT=prod`. -->
+<!-- feat:end -->
+<!-- feat:if postgresql -->
 
 ## Backup and restore
 
@@ -140,6 +170,7 @@ once. An untested restore is a hope, not a backup.
 
 Restore is destructive: `pg-restore` loads into the live database. Take a dump
 first, even when restoring, so a bad file does not cost you both copies.
+<!-- feat:end -->
 
 ## Logs and health
 
@@ -147,12 +178,15 @@ first, even when restoring, so a bad file does not cost you both copies.
 make logs                        # follow every container in the stack
 make ps                          # what is running
 ```
+<!-- feat:if backend -->
 
 The backend serves `/health` on `MY_PROJECT_API_HEALTH_PORT` (default 3333,
 separate from the API port so a health probe never traverses the API's
 middleware) and Prometheus metrics on `/metrics` — see the hardening note below
 on keeping the latter off a public interface.
+<!-- feat:end -->
 
+<!-- feat:if backend|frontend -->
 ## Production hardening
 
 The defaults favour local-dev convenience. Tighten these before exposing the
@@ -201,4 +235,5 @@ In `env/<stage|prod>/api.env`:
 - **CSP** — `.docker/nginx.conf` ships a same-origin CSP plus baseline security
   headers. Widen it only for the third-party assets the page actually loads
   (fonts, analytics, embeds).
+<!-- feat:end -->
 <!-- feat:end -->
