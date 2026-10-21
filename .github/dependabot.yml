@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # feat:if backend
   - package-ecosystem: gomod
     directory: /services/backend
     schedule:
@@ -8,6 +9,8 @@ updates:
       go-deps:
         patterns: ["*"]
 
+  # feat:end
+  # feat:if frontend
   - package-ecosystem: npm
     directory: /services/frontend
     schedule:
@@ -18,13 +21,19 @@ updates:
     ignore:
       # TypeScript 7 has no working consumer yet: typescript-eslint 8.67.0 (the
       # current release) peer-requires `typescript >=4.8.4 <6.1.0`, so a 7.x bump
-      # produces an unresolvable tree — `npm ci` fails with ERESOLVE. This repo's
-      # CI cannot catch that (every job is gated on an unshipped go.sum), which
-      # makes the ignore load-bearing rather than a convenience. Drop it once
-      # typescript-eslint widens the range; 6.x minor/patch still come through.
+      # produces an unresolvable tree — `npm ci` fails with ERESOLVE.
+      # feat:if template
+      # This repo's CI cannot catch that (every job is gated on an unshipped
+      # go.sum), which makes the ignore load-bearing rather than a convenience.
+      # feat:else
+      #~ # The frontend CI job would fail such a PR; the ignore spares opening it.
+      # feat:end
+      # Drop it once typescript-eslint widens the range; 6.x minor/patch still
+      # come through.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
 
+  # feat:end
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -32,13 +41,19 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  # feat:if backend|frontend
 
   - package-ecosystem: docker
     directories:
+      # feat:if backend
       - /services/backend/.docker
+      # feat:end
+      # feat:if frontend
       - /services/frontend/.docker
+      # feat:end
     schedule:
       interval: weekly
     groups:
       docker-images:
         patterns: ["*"]
+  # feat:end
