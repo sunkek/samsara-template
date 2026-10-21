@@ -190,6 +190,7 @@ gen-key-b64:
 #   make env-add FILE=api.env NAME=MY_PROJECT_API_STRIPE_KEY SECRET=1 ENVS=prod
 # feat:else
 #~ #   make env-add FILE=ports.env NAME=MY_PROJECT_PREVIEW_PORT VALUE=4173
+#~ #   touch env/example/deploy.env     # env-add extends an existing file
 #~ #   make env-add FILE=deploy.env NAME=MY_PROJECT_DEPLOY_TOKEN SECRET=1 ENVS=prod
 # feat:end
 #

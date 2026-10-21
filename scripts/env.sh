@@ -35,6 +35,7 @@ set -euo pipefail
 #   scripts/env.sh add api.env MY_PROJECT_API_STRIPE_KEY --secret --envs prod
 # feat:else
 #~ #   scripts/env.sh add ports.env MY_PROJECT_PREVIEW_PORT 4173
+#~ #   touch env/example/deploy.env     # add extends an existing file
 #~ #   scripts/env.sh add deploy.env MY_PROJECT_DEPLOY_TOKEN --secret --envs prod
 # feat:end
 #   scripts/env.sh sync

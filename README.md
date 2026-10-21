@@ -19,8 +19,11 @@
 <!-- feat:if backend,frontend -->
 A Go backend organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor: auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs, wired and running. The React/Vite frontend is a **starting point, not a finished SPA** — the build, the nginx production image with its CSP, the tested dev proxy and the test harness are in place; `src/` is a placeholder page for you to replace. The depth here is backend and infrastructure.
 <!-- feat:end -->
-<!-- feat:if backend,!frontend -->
+<!-- feat:if backend,!frontend,postgresql -->
 <!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor. Auth, sample domains, migrations, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running. -->
+<!-- feat:end -->
+<!-- feat:if backend,!frontend,!postgresql -->
+<!--~ A Go service organized as ports & adapters on the [samsara](https://github.com/sunkek/samsara) component supervisor: the HTTP server, health and metrics endpoints, CI, Dockerized dev/stage/prod stacks and Swagger docs are wired and running, with no domains yet. Add yours under `services/backend/internal/domain/`. -->
 <!-- feat:end -->
 <!-- feat:if frontend,!backend -->
 <!--~ A React + Vite + TypeScript starting point: the build, the Docker/nginx production image with its CSP, compose stacks, the test harness and CI wiring are in place, and `src/` is a placeholder page for you to replace. Run it with `make run-local`; deploy it with `make up ENVIRONMENT=prod`. -->

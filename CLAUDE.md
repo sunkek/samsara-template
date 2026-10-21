@@ -49,9 +49,15 @@ slice. Replace them with your own; they exist to be read and then deleted.
 - **`CONTEXT.md`** — the glossary. Read it before naming a new type, package or
   concept, and use its words in code, comments and commits.
 <!-- feat:if backend -->
+<!-- feat:if template -->
 - **`docs/adr/`** — why the shape is what it is: feature rendering, domain-owned
   ports, optional infra, token revocation, hand-written SQL, and the sample-domain
   split. Read the relevant one before changing any of those.
+<!-- feat:else -->
+<!--~ - **`docs/adr/`** — why the shape is what it is: domain-owned ports, optional -->
+<!--~   infra, token revocation, hand-written SQL, and the sample-domain split. Read -->
+<!--~   the relevant one before changing any of those. -->
+<!-- feat:end -->
 <!-- feat:end -->
 - **`AGENTS.md`** — coding style, testing, commit format.
 - **`make help`** — every Make target, always current. Prefer it over asking.
@@ -77,9 +83,14 @@ slice. Replace them with your own; they exist to be read and then deleted.
 <!-- feat:end -->
 - Host-side ports live in `env/<env>/ports.env`, not in the compose files.
 - Both CI files (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) must stay in sync
+<!-- feat:if template -->
   on what they check. The template-maintenance jobs (`feature-renderer`,
   `feature-matrix`, CodeQL) are the exception: they exist on GitHub only, because
   the template itself is hosted there.
+<!-- feat:else -->
+<!--~   on what they check, except CodeQL (`.github/workflows/codeql.yml`), which -->
+<!--~   exists on GitHub only. -->
+<!-- feat:end -->
 
 ## First run after cloning
 
