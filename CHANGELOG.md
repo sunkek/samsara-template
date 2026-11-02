@@ -16,8 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `my_project-` as well: they are DNS aliases on the shared `dev` network, and
   a bare `postgresql` there resolved to any fork's database. Existing forks
   need both changes; the data volumes are named per project and survive.
+- `make up` and `make run` first remove the project's containers whose service
+  no longer exists (`make remove-stale`). Renaming a service, as the change
+  above asks of existing forks, leaves the old container holding its
+  `container_name`; compose's `--remove-orphans` removes it concurrently with
+  creating the replacement, which then fails on the name. `make up` now
+  builds before that step, so a deploy stops the stack only for the swap.
 
 ### Security
+- Frontend dependencies updated past published advisories: vite 8.3.5,
+  vitest and `@vitest/mocker` 4.1.12, undici 8.12.3, brace-expansion 5.0.12,
+  source-map-js 1.2.2.
 - `auth` login no longer reveals through its timing which emails are
   registered. An unknown email returned before any bcrypt work, in
   microseconds, while a wrong password took one bcrypt comparison, tens of

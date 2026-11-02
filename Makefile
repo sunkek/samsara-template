@@ -33,7 +33,7 @@ COMPOSE_WITH_PORTS = set -a; ENVIRONMENT=$(ENVIRONMENT); [ -f "$(PORTS_ENV)" ] &
 .PHONY: help gen-env gen-key-hex gen-key-b64 env-add env-sync \
 	secrets-init secrets-encrypt secrets-decrypt secrets-check secrets-add-recipient secrets-remove-recipient \
 	up down down-v restart restart-v restart-local restart-local-v \
-	run run-local stop logs ps pull
+	run run-local stop logs ps pull remove-stale
 # feat:if backend
 .PHONY: gen-api-docs check-api-docs
 # feat:end
@@ -289,8 +289,11 @@ check-api-docs:
 # Backend needs go.sum committed (`cd services/backend && go mod tidy` once).
 # feat:end
 # Env files must exist: `make gen-env GEN_ENVS="$(ENVIRONMENT)" APP=...`.
+# Build first, so the stack only stops for the swap itself, not for the build.
 up:
-	$(COMPOSE_WITH_PORTS) --profile app up -d --build
+	$(COMPOSE_WITH_PORTS) --profile app build
+	$(MAKE) remove-stale ENVIRONMENT=$(ENVIRONMENT)
+	$(COMPOSE_WITH_PORTS) --profile app up -d
 
 down: stop
 
@@ -309,8 +312,26 @@ restart-local:
 restart-local-v:
 	$(MAKE) down-v run-local
 
-run:
+run: remove-stale
 	$(COMPOSE_WITH_PORTS) up -d
+
+# Removes this project's containers whose service no longer exists in the
+# compose files. A renamed or deleted service leaves its old container behind,
+# still holding the container_name a new one may need. compose's own
+# --remove-orphans is not enough: it removes orphans concurrently with
+# creating the replacements, which then collide on the name. Here they go one
+# by one, before anything is created, each stopped gracefully first: removing
+# a running Postgres with rm -f kills it, and the next start has to run crash
+# recovery. Volumes are untouched.
+remove-stale:
+	@services="$$($(COMPOSE_WITH_PORTS) --profile app config --services)"; \
+	for id in $$(docker ps -aq --filter label=com.docker.compose.project=my_project-$(ENVIRONMENT)); do \
+		svc="$$(docker inspect -f '{{index .Config.Labels "com.docker.compose.service"}}' "$$id")"; \
+		if ! printf '%s\n' "$$services" | grep -qx -- "$$svc"; then \
+			echo "Removing $$(docker inspect -f '{{.Name}}' "$$id") (service $$svc no longer exists)"; \
+			docker stop -t 60 "$$id" >/dev/null; docker rm "$$id" >/dev/null; \
+		fi; \
+	done
 
 # run-local is always the dev environment: infra in Docker, the app services on
 # the host. It sources env/local/* directly.
