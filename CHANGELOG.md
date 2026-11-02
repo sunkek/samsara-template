@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Forks no longer replace each other's containers. Every fork's compose
+  project was named after its directory, `infra`, and compose identifies its
+  containers by project and service name, not `container_name`, so `make up`
+  in one fork recreated a second fork's services with its own configuration.
+  The project is now `my_project-<env>`. Service names now start with
+  `my_project-` as well: they are DNS aliases on the shared `dev` network, and
+  a bare `postgresql` there resolved to any fork's database. Existing forks
+  need both changes; the data volumes are named per project and survive.
+
 ### Security
 - `auth` login no longer reveals through its timing which emails are
   registered. An unknown email returned before any bcrypt work, in

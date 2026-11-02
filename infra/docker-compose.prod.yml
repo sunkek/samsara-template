@@ -35,7 +35,7 @@ services:
 #~ services: {}
 # feat:end
   # feat:if backend
-  backend:
+  my_project-backend:
     build:
       context: ../services/backend
       dockerfile: .docker/Dockerfile.prod
@@ -76,7 +76,7 @@ services:
   # feat:end
 
   # feat:if frontend
-  frontend:
+  my_project-frontend:
     build:
       context: ../services/frontend
       dockerfile: .docker/Dockerfile.prod
@@ -97,7 +97,7 @@ services:
   # feat:end
 
   # feat:if postgresql
-  postgresql:
+  my_project-postgresql:
     deploy:
       resources:
         limits:
@@ -109,7 +109,7 @@ services:
   # feat:end
 
   # feat:if rabbitmq
-  rabbitmq:
+  my_project-rabbitmq:
     deploy:
       resources:
         limits:
@@ -121,7 +121,7 @@ services:
   # feat:end
 
   # feat:if redis
-  redis:
+  my_project-redis:
     deploy:
       resources:
         limits:

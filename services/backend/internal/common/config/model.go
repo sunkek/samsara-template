@@ -158,7 +158,7 @@ func (f Fiber) ToSamsaraCfg() fiber.Config {
 
 // feat:if postgresql
 type PostgreSQL struct {
-	Host           string        `envconfig:"HOST" default:"postgresql"`
+	Host           string        `envconfig:"HOST" default:"my_project-postgresql"`
 	Port           int           `envconfig:"PORT" default:"5432"`
 	Name           string        `envconfig:"NAME" default:"postgresql"`
 	User           string        `envconfig:"USER" default:"postgresql"`
@@ -188,7 +188,7 @@ func (p PostgreSQL) ToSamsaraCfg() postgresql.Config {
 // feat:end
 // feat:if rabbitmq
 type RabbitMQ struct {
-	Host           string        `envconfig:"HOST" default:"rabbitmq"`
+	Host           string        `envconfig:"HOST" default:"my_project-rabbitmq"`
 	Port           int           `envconfig:"PORT" default:"5672"`
 	VHost          string        `envconfig:"VHOST" default:"app"`
 	User           string        `envconfig:"USER" default:"app"`
@@ -214,7 +214,7 @@ func (r RabbitMQ) ToSamsaraCfg() rabbitmq.Config {
 // feat:end
 // feat:if redis
 type Redis struct {
-	Host           string        `envconfig:"HOST" default:"redis"`
+	Host           string        `envconfig:"HOST" default:"my_project-redis"`
 	Port           int           `envconfig:"PORT" default:"6379"`
 	DB             int           `envconfig:"DB" default:"0"`
 	User           string        `envconfig:"USER" default:"redis"`

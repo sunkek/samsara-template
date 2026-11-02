@@ -323,13 +323,13 @@ run:
 # half is not selected.
 LOCAL_INFRA :=
 # feat:if postgresql
-LOCAL_INFRA += postgresql
+LOCAL_INFRA += my_project-postgresql
 # feat:end
 # feat:if rabbitmq
-LOCAL_INFRA += rabbitmq
+LOCAL_INFRA += my_project-rabbitmq
 # feat:end
 # feat:if redis
-LOCAL_INFRA += redis
+LOCAL_INFRA += my_project-redis
 # feat:end
 
 # feat:if backend

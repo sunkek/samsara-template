@@ -33,7 +33,8 @@ when `backend` is kept.
 
 Every fork also loses the template tooling: `bootstrap.sh`, the feature
 renderer (`scripts/apply_features.sh`, `features.awk`, `features_test.sh`),
-`docs/FEATURES.md`, this file, `CHANGELOG.md`, ADR 0001, the template-only CI
+the fork-isolation test (`scripts/isolation_test.sh`), `docs/FEATURES.md`,
+this file, `CHANGELOG.md`, ADR 0001, the template-only CI
 jobs and the template-only doc sections.
 
 ## Into an existing git repository

@@ -6,8 +6,16 @@
 override it with the build target, source mounts, ports and healthchecks.
 `make up [ENVIRONMENT=…]` merges base + override (`-f base -f <env>`) and brings
 up the `app` profile. Container and volume names carry the `$ENVIRONMENT`
-suffix; services find each other through stable network aliases, never through
-container names.
+suffix; services find each other by service name, never by container name.
+
+The project is named `my_project-<env>` and every service name starts with
+`my_project-`. Both guard against other projects on the same machine, not
+other environments: compose identifies its containers by project and service
+labels (`container_name` plays no part), the default project name is the
+directory, `infra`, in every fork, and every fork's services join the one
+external `dev` network, where each service name is a DNS alias. Without the
+prefixes, `make up` in one fork replaces another fork's containers, and
+`postgresql` on the network resolves to whichever fork's database answers.
 
 - `dev` mounts source for hot reload.
 <!-- feat:if backend -->
@@ -15,7 +23,7 @@ container names.
 <!-- feat:end -->
 <!-- feat:if frontend,backend -->
 - `stage` / `prod` build the frontend as nginx serving `dist/` and proxying
-  `/api` to the `backend` alias, so the SPA stays same-origin on a relative
+  `/api` to the `my_project-backend` service, so the SPA stays same-origin on a relative
   `/api/v1` base.
 <!-- feat:end -->
 <!-- feat:if frontend,!backend -->

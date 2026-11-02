@@ -41,11 +41,11 @@ describe('resolveBackendPort', () => {
 describe('resolveProxyTarget', () => {
   it('targets the backend container when PROXY_TARGET is set', () => {
     const env = {
-      MY_PROJECT_API_PROXY_TARGET: 'http://backend:8000',
+      MY_PROJECT_API_PROXY_TARGET: 'http://my_project-backend:8000',
       MY_PROJECT_API_FIBER_PORT: '7777',
     }
 
-    expect(resolveProxyTarget('.', env)).toBe('http://backend:8000')
+    expect(resolveProxyTarget('.', env)).toBe('http://my_project-backend:8000')
   })
 
   it('targets localhost on the resolved port otherwise', () => {

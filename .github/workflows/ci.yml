@@ -208,6 +208,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: scripts/features_test.sh
 
+  # Two forks on one machine must not replace each other's containers or
+  # answer to each other's service names on the shared dev network. Bootstraps
+  # two forks and compares their compose files.
+  fork-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: scripts/isolation_test.sh
+
   # Template-maintenance job: proves every feature combination still renders and
   # builds. The `template` feature is never selected by apply_features.sh, so
   # this job exists only in the template and disappears from every fork.
@@ -274,7 +283,7 @@ jobs:
           # bootstrap.sh drops the feature tooling from a fork; do the same here
           # so the marker syntax in its own source does not count as a leftover.
           rm -f /tmp/render/app/scripts/apply_features.sh /tmp/render/app/scripts/features.awk \
-                /tmp/render/app/scripts/features_test.sh
+                /tmp/render/app/scripts/features_test.sh /tmp/render/app/scripts/isolation_test.sh
           # Match the renderer's own rule: markers are recognised only at the
           # start of a line. Prose that mentions `feat:if` mid-sentence (the
           # marker docs, ADR 0001) is not a leftover marker and must not fail.

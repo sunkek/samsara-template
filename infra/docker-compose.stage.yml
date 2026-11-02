@@ -14,7 +14,7 @@ services:
 #~ services: {}
 # feat:end
   # feat:if backend
-  backend:
+  my_project-backend:
     build:
       context: ../services/backend
       dockerfile: .docker/Dockerfile.prod
@@ -33,7 +33,7 @@ services:
   # feat:end
 
   # feat:if frontend
-  frontend:
+  my_project-frontend:
     build:
       context: ../services/frontend
       dockerfile: .docker/Dockerfile.prod

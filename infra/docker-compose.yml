@@ -3,12 +3,22 @@
 # healthchecks — live in docker-compose.<env>.yml overrides, merged via
 #   docker compose -f docker-compose.yml -f docker-compose.$ENVIRONMENT.yml ...
 # (see `make up`). Container and volume names are scoped by $ENVIRONMENT so
-# multiple environments don't collide; services reach each other by stable
-# network aliases, never by container name.
+# multiple environments don't collide; services reach each other by service
+# name, never by container name.
+#
+# The project is named, and the service names carry the project's name, for
+# the same reason: other projects on this machine. Compose recognises its own
+# containers by project and service labels, not by container_name, and the
+# default project name is this directory's, "infra", which every fork of the
+# template shares. Unnamed, `make up` in one fork treats another fork's
+# containers as its own and replaces them. And compose makes every service
+# name a DNS alias on the external dev network, which every fork joins, so a
+# bare "postgresql" there resolves to any fork's database.
 # feat:if backend
-# The aliases (postgresql / rabbitmq / redis / backend) also match the
-# backend's config defaults.
+# The service names also match the backend's config defaults.
 # feat:end
+name: my_project-${ENVIRONMENT:-dev}
+
 networks:
   dev:
     external: true
@@ -36,7 +46,7 @@ services:
 #~ services: {}
 # feat:end
   # feat:if postgresql
-  postgresql:
+  my_project-postgresql:
     image: postgres:18
     container_name: my_project_postgresql_${ENVIRONMENT:-dev}
     restart: unless-stopped
@@ -47,9 +57,7 @@ services:
     env_file:
       - ../env/${ENVIRONMENT:-dev}/postgresql.env
     networks:
-      dev:
-        aliases:
-          - postgresql
+      - dev
     volumes:
       - postgresql_data:/var/lib/postgresql
       - ./postgresql/init/01-create-app-user-db.sh:/docker-entrypoint-initdb.d/01-create-app-user-db.sh:ro
@@ -65,7 +73,7 @@ services:
   # feat:end
 
   # feat:if rabbitmq
-  rabbitmq_init:
+  my_project-rabbitmq-init:
     image: dibi/envsubst:1
     container_name: my_project_rabbitmq_init_${ENVIRONMENT:-dev}
     volumes:
@@ -79,19 +87,17 @@ services:
     labels:
       - traefik.enable=false
 
-  rabbitmq:
+  my_project-rabbitmq:
     image: rabbitmq:4.2-management
     container_name: my_project_rabbitmq_${ENVIRONMENT:-dev}
     restart: unless-stopped
     depends_on:
-      rabbitmq_init:
+      my_project-rabbitmq-init:
         condition: service_completed_successfully
     env_file:
       - ../env/${ENVIRONMENT:-dev}/rabbitmq.env
     networks:
-      dev:
-        aliases:
-          - rabbitmq
+      - dev
     expose:
       - 5672
       - 15672
@@ -114,7 +120,7 @@ services:
   # feat:end
 
   # feat:if redis
-  redis_init:
+  my_project-redis-init:
     image: dibi/envsubst:1
     container_name: my_project_redis_init_${ENVIRONMENT:-dev}
     volumes:
@@ -128,7 +134,7 @@ services:
     labels:
       - traefik.enable=false
 
-  redis:
+  my_project-redis:
     image: redis:8
     container_name: my_project_redis_${ENVIRONMENT:-dev}
     restart: unless-stopped
@@ -137,12 +143,10 @@ services:
     ports:
       - "127.0.0.1:${MY_PROJECT_REDIS_PORT:-6379}:6379"
     depends_on:
-      redis_init:
+      my_project-redis-init:
         condition: service_completed_successfully
     networks:
-      dev:
-        aliases:
-          - redis
+      - dev
     volumes:
       - redis_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -164,43 +168,41 @@ services:
   # override. Behind the "app" profile so `make run` / `make run-local` (no
   # profile) start only infra; `make up` passes --profile app.
   # feat:if backend
-  backend:
+  my_project-backend:
     profiles: ["app"]
     container_name: my_project_backend_${ENVIRONMENT:-dev}
     restart: unless-stopped
     # feat:if postgresql|rabbitmq|redis
     depends_on:
       # feat:if postgresql
-      postgresql:
+      my_project-postgresql:
         condition: service_healthy
       # feat:end
       # feat:if rabbitmq
-      rabbitmq:
+      my_project-rabbitmq:
         condition: service_healthy
       # feat:end
       # feat:if redis
-      redis:
+      my_project-redis:
         condition: service_healthy
       # feat:end
     # feat:end
     networks:
-      dev:
-        aliases:
-          - backend
+      - dev
     env_file:
       - ../env/${ENVIRONMENT:-dev}/api.env
     environment:
       # api.env points at localhost (host runs); in-network the backend reaches
-      # each dependency by its stable alias on the standard internal port.
+      # each dependency by service name on the standard internal port.
       MY_PROJECT_API_FIBER_HOST: "0.0.0.0"
       # feat:if postgresql
-      MY_PROJECT_API_POSTGRESQL_HOST: postgresql
+      MY_PROJECT_API_POSTGRESQL_HOST: my_project-postgresql
       # feat:end
       # feat:if rabbitmq
-      MY_PROJECT_API_RABBITMQ_HOST: rabbitmq
+      MY_PROJECT_API_RABBITMQ_HOST: my_project-rabbitmq
       # feat:end
       # feat:if redis
-      MY_PROJECT_API_REDIS_HOST: redis
+      MY_PROJECT_API_REDIS_HOST: my_project-redis
       # feat:end
     expose:
       - 8000
@@ -210,13 +212,13 @@ services:
   # feat:end
 
   # feat:if frontend
-  frontend:
+  my_project-frontend:
     profiles: ["app"]
     container_name: my_project_frontend_${ENVIRONMENT:-dev}
     restart: unless-stopped
     # feat:if backend
     depends_on:
-      backend:
+      my_project-backend:
         condition: service_healthy
     # feat:end
     networks:

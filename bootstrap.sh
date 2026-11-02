@@ -312,6 +312,7 @@ if [ "$FEATURES" != "$ALL_FEATURES" ] || [ -f scripts/apply_features.sh ]; then
   scripts/apply_features.sh -f "$FEATURES" -C .
 fi
 rm -f scripts/apply_features.sh scripts/features.awk scripts/features_test.sh \
+      scripts/isolation_test.sh \
       docs/FEATURES.md docs/BOOTSTRAP.md
 # Template-maintenance material that would dangle in a fork: the template's own
 # changelog, the ADR about the feature renderer, and the issue template that

@@ -19,7 +19,7 @@ _Avoid_: service, module
 <!-- feat:end -->
 **Service** (compose):
 A container in a Docker Compose stack. Only ever means this.
-_Avoid_: app, container name — services address each other by network alias
+_Avoid_: app, container name — services address each other by service name
 
 <!-- feat:if backend -->
 **Domain**:

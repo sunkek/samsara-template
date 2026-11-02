@@ -1,6 +1,6 @@
 # Build the SPA, then serve the static bundle with nginx.
 # feat:if backend
-# nginx also proxies /api to the backend container (alias "backend"), so the
+# nginx also proxies /api to the my_project-backend service, so the
 # app is same-origin and the SPA can use a relative /api/v1 base (see
 # vite.config.ts).
 # feat:end
