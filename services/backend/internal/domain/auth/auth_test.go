@@ -307,6 +307,26 @@ func TestLogin(t *testing.T) {
 			t.Fatalf("want e.Unauthorized (401), got %v", err)
 		}
 	})
+	// The bound is a floor, so a slow or loaded runner only makes the unknown
+	// path slower and cannot fail the test; what fails it is the unknown path
+	// skipping bcrypt, which makes it orders of magnitude faster.
+	t.Run("unknown user costs as much as a wrong password", func(t *testing.T) {
+		d := newDomain(db)
+		ctx := context.Background()
+		dummyHash() // keep the one-off hash generation out of the measurement
+
+		start := time.Now()
+		_, _ = d.Login(ctx, model.LoginInput{Email: "a@b.com", Password: "nope"})
+		known := time.Since(start)
+
+		start = time.Now()
+		_, _ = d.Login(ctx, model.LoginInput{Email: "nobody@b.com", Password: "nope"})
+		unknown := time.Since(start)
+
+		if unknown < known/2 {
+			t.Fatalf("unknown email took %v, wrong password %v: the timing reveals which emails exist", unknown, known)
+		}
+	})
 	t.Run("success", func(t *testing.T) {
 		toks, err := newDomain(db).Login(context.Background(), model.LoginInput{Email: "A@B.com", Password: "correct-horse"})
 		if err != nil {

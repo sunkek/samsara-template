@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- `auth` login no longer reveals through its timing which emails are
+  registered. An unknown email returned before any bcrypt work, in
+  microseconds, while a wrong password took one bcrypt comparison, tens of
+  milliseconds; the uniform error message hid the difference but the clock did
+  not. The unknown-email path now compares against a dummy hash at the same
+  cost, and `TestLogin` fails if the two paths drift apart again.
 - `make secrets-remove-recipient` (`scripts/secrets.sh remove-recipient`):
   removing a recipient now also rotates each file's data key. Before this,
   `docs/SECRETS.md` said to drop the key from `.sops.yaml` and re-key, but
