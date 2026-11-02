@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   builds before that step, so a deploy stops the stack only for the swap.
 
 ### Security
+- The backend builds with Go 1.26.10 (`toolchain` in `go.mod`, the GitLab CI
+  image) and `golang:1.27.3-alpine` (Dockerfiles), past GO-2026-6809
+  (`crypto/x509`) and the `net/http` and `net/textproto` advisories in
+  go1.26.6 and golang 1.27.0. Dependabot does not report Go standard-library
+  advisories; govulncheck does.
 - Frontend dependencies updated past published advisories: vite 8.3.5,
   vitest and `@vitest/mocker` 4.1.12, undici 8.12.3, brace-expansion 5.0.12,
   source-map-js 1.2.2.

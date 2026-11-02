@@ -28,7 +28,7 @@ backend:
   stage: test
   # Pinned by hand: GitLab has no equivalent of setup-go's go-version-file, so
   # this must be bumped alongside the `go` directive in services/backend/go.mod.
-  image: golang:1.26.4
+  image: golang:1.26.10
   cache:
     key:
       files:
@@ -78,7 +78,7 @@ backend-lint:
 # available inside a plain service-container job.
 integration:
   stage: test
-  image: golang:1.26.4
+  image: golang:1.26.10
   services:
     - name: postgres:16-alpine
       alias: postgres

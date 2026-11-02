@@ -2,7 +2,7 @@ module github.com/sunkek/samsara-template/backend
 
 go 1.26.4
 
-toolchain go1.26.6
+toolchain go1.26.10
 
 require (
 	github.com/gofiber/contrib/v3/swaggo v1.0.10
