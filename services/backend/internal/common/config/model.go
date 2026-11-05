@@ -35,15 +35,15 @@ type Config struct {
 	JWT  JWT  `envconfig:"JWT"`
 	Auth Auth `envconfig:"AUTH"`
 	// feat:end
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	Article Article `envconfig:"ARTICLE"`
 	// feat:end
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	Events Events `envconfig:"EVENTS"`
 	// feat:end
 }
 
-// feat:if redis,rabbitmq
+// feat:if postgresql,redis,rabbitmq
 // Events configures the RabbitMQ topic exchange and routing/queue names used by
 // the article domain's publisher and the articlestats consumer worker.
 type Events struct {
@@ -53,7 +53,7 @@ type Events struct {
 }
 
 // feat:end
-// feat:if redis,rabbitmq
+// feat:if postgresql,redis,rabbitmq
 // Article configures the sample article domain. CacheTTL is the Redis
 // cache-aside entry lifetime for article reads.
 type Article struct {

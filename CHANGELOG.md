@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now pin `v2.0.0-rc6`, as do the README and the Makefile notes.
 - The `articlestats` handler annotation named its response type by the
   template's module path, which broke Swagger generation in any renamed fork.
+- Forks without the `article` samples no longer keep their leftovers: the
+  article, cache and event metrics, the `ARTICLE_*`/`EVENTS_*` config (also in
+  builds with Redis and RabbitMQ but no PostgreSQL, which prunes the samples
+  too), and mentions in the `note` doc comment, `CONTRIBUTING.md`,
+  `docs/ARCHITECTURE.md` and ADR 0003. ADR 0006, which records the sample
+  split, is pruned with them. The `note` metric goes without `postgresql`.
 - CI lints with golangci-lint v2.13.2 on both GitHub and GitLab. GitLab
   pinned v2.1, built with Go 1.24, which refuses to load the Go 1.26 module;
   GitHub ran whatever was latest. The backend passes the newer linter.

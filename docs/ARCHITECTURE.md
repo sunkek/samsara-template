@@ -96,14 +96,19 @@ and the error mapping, and you add your own first domain.
 <!-- feat:if postgresql -->
 ## Sample domains
 
+<!-- feat:if postgresql,redis,rabbitmq -->
 Each sample teaches one thing, so you can read the one you need and delete the
 rest (ADR 0006).
+<!-- feat:else -->
+<!--~ Each sample teaches one thing, so you can read the one you need and delete the -->
+<!--~ rest. -->
+<!-- feat:end -->
 
 **`note`** — the vertical slice and nothing else: model, `Service`, `DB`, a
 fiber adapter and a postgresql adapter. No cache, no events. This is the domain
 a new domain is copied from.
 
-<!-- feat:if redis,rabbitmq -->
+<!-- feat:if postgresql,redis,rabbitmq -->
 **`article`** — the same slice plus optional infrastructure. Reads are
 **cache-aside** through a `Cache` port (`adapter/redis`): `Get`/`List` serve from
 cache on a hit and populate it on a miss; `Create` warms the item and

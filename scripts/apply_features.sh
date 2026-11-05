@@ -81,14 +81,17 @@ prune postgresql \
   services/backend/internal/domain/articlestats \
   services/backend/internal/domain/auth \
   services/backend/internal/integration \
+  docs/adr/0006-three-sample-domains-one-lesson-each.md \
   infra/postgresql \
   env/example/postgresql.env
 
 # article and articlestats exist to demonstrate Redis caching and RabbitMQ
 # events; a build missing either has no use for a domain whose whole purpose is
 # the capability it lacks, so both are pruned rather than degraded. See
-# docs/adr/0006.
-SAMPLE_OPTIONAL_INFRA="services/backend/internal/domain/article
+# docs/adr/0006 — which goes with them: it records the split of samples the
+# fork no longer has.
+SAMPLE_OPTIONAL_INFRA="docs/adr/0006-three-sample-domains-one-lesson-each.md
+services/backend/internal/domain/article
 services/backend/internal/domain/articlestats
 infra/postgresql/migration/000003_create_articles.up.sql
 infra/postgresql/migration/000003_create_articles.down.sql

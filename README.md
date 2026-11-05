@@ -173,7 +173,7 @@ and remove an operator, and why removal means rotation.
 - Auth: `POST /api/v1/auth/register`, `/auth/login`, `/auth/refresh` (JWT). Login returns an access + refresh token pair.
 - Sample domain: `note` — `POST /api/v1/notes`, `GET /api/v1/notes`, `GET /api/v1/notes/:id`. Protected: send `Authorization: Bearer <access_token>`.
 <!-- feat:end -->
-<!-- feat:if redis,rabbitmq -->
+<!-- feat:if postgresql,redis,rabbitmq -->
 - Sample domain with optional infra: `article` — same routes under `/api/v1/articles`, cached reads and `article.created` events.
 - Read model: `GET /api/v1/stats`, projected from `article.created` events.
 <!-- feat:end -->

@@ -38,7 +38,7 @@ func connect(t *testing.T) *pgx.Conn {
 func TestSchemaMigrated(t *testing.T) {
 	conn := connect(t)
 	tables := []string{"users", "notes"}
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	tables = append(tables, "articles", "article_stats")
 	// feat:end
 	for _, table := range tables {
