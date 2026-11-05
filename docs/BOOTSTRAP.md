@@ -58,9 +58,14 @@ and remote — not what you want for a new repository.
 
 ## After bootstrapping
 
+With `backend` kept and Go on `PATH`, `bootstrap.sh` has already run
+`go mod tidy` (CI waits for a committed `go.sum`) and regenerated the Swagger
+spec in `services/backend/docs` for the fork's module path and endpoints. If it
+warned that it could not, run `(cd services/backend && go mod tidy)` and
+`make gen-api-docs` before the first commit.
+
 ```bash
 cd ../myapp
-(cd services/backend && go mod tidy)    # backend: CI waits for a committed go.sum
 (cd services/frontend && npm install)   # frontend
 docker network create dev               # once per machine; an "exists" error is fine
 make gen-env APP=myapp                  # env/dev + env/local, git-ignored
@@ -79,6 +84,7 @@ The same checks CI runs:
 shellcheck -x -S warning scripts/*.sh
 make secrets-check
 (cd services/frontend && npm ci && npm run lint && npm test && npm run build)
-(cd services/backend && test -z "$(gofmt -l .)" && go vet ./... && go build ./... && go test ./...)
+(cd services/backend && test -z "$(gofmt -l .)" && go vet ./... && golangci-lint run && go build ./... && go test ./...)
+make check-api-docs                     # needs swag v2.0.0-rc6, the version CI pins
 grep -rnI 'my_project\|MY_PROJECT\|My Project' . --exclude-dir=node_modules --exclude-dir=.git   # expect nothing
 ```

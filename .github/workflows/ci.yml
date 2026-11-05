@@ -223,9 +223,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: scripts/isolation_test.sh
 
-  # Template-maintenance job: proves every feature combination still renders and
-  # builds. The `template` feature is never selected by apply_features.sh, so
-  # this job exists only in the template and disappears from every fork.
+  # Template-maintenance job: proves every feature combination bootstraps into a
+  # fork that passes the fork's own CI checks. The `template` feature is never
+  # selected by apply_features.sh, so this job exists only in the template and
+  # disappears from every fork.
+  #
+  # It renders through bootstrap.sh, not apply_features.sh alone: the rename and
+  # the Swagger regeneration happen there, and a fork's spec, module path and
+  # go.sum are what its first push is checked against.
   #
   # The matrix is EXHAUSTIVE — all 2^5 combinations — deliberately. A curated
   # subset leaves the untested ones to break silently, and a fork only finds out
@@ -281,15 +286,13 @@ jobs:
       - name: render
         run: |
           mkdir -p /tmp/render
-          cp -R . /tmp/render/app
-          rm -rf /tmp/render/app/.git
-          ./scripts/apply_features.sh -f "${{ matrix.features }}" -C /tmp/render/app
+          ./bootstrap.sh -y -d /tmp/render/app -n matrix_app -t "Matrix App" \
+            -m example.com/matrix_app/backend -a "Matrix" -E matrix@example.org \
+            -F "${{ matrix.features }}"
       - name: no markers left
         run: |
-          # bootstrap.sh drops the feature tooling from a fork; do the same here
-          # so the marker syntax in its own source does not count as a leftover.
-          rm -f /tmp/render/app/scripts/apply_features.sh /tmp/render/app/scripts/features.awk \
-                /tmp/render/app/scripts/features_test.sh /tmp/render/app/scripts/isolation_test.sh
+          # bootstrap.sh has already dropped the feature tooling, whose own
+          # source carries the marker syntax.
           # Match the renderer's own rule: markers are recognised only at the
           # start of a line. Prose that mentions `feat:if` mid-sentence (the
           # marker docs, ADR 0001) is not a leftover marker and must not fail.
@@ -303,15 +306,40 @@ jobs:
                /tmp/render/app --exclude-dir=.git --exclude=FEATURES.md; then
             echo "inert ~-leader lines survived"; exit 1
           fi
-      - name: backend builds
+      # The pruned samples, article and articlestats, exist only with postgresql,
+      # redis and rabbitmq together. Without them nothing may still name them: a
+      # metric, config field, doc line or Swagger path left behind compiles and
+      # lints clean, so only a search finds it. redis.tmpl.conf is upstream
+      # Redis's annotated config, where "article" is ordinary prose.
+      - name: no pruned sample leftovers
+        run: |
+          f=",${{ matrix.features }},"
+          if [[ $f == *,postgresql,* && $f == *,redis,* && $f == *,rabbitmq,* ]]; then
+            exit 0
+          fi
+          if grep -rniI 'article' /tmp/render/app --exclude-dir=.git \
+               --exclude-dir=node_modules --exclude=redis.tmpl.conf; then
+            echo "the pruned article samples are still referenced"; exit 1
+          fi
+      # The same checks the fork's own backend CI job runs, at the same pinned
+      # tool versions (golangci-lint as in .gitlab-ci.yml's backend-lint image,
+      # swag as in the backend job), so a combination that renders but would
+      # fail its first push fails here instead.
+      - name: backend passes the fork's CI
         run: |
           [ -d /tmp/render/app/services/backend ] || exit 0
           cd /tmp/render/app/services/backend
-          go mod tidy
+          test -f go.sum || { echo "bootstrap left no go.sum"; exit 1; }
           test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
           go vet ./...
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/app -w /app \
+            -v "$(go env GOMODCACHE)":/go/pkg/mod \
+            -e GOCACHE=/tmp/go-build -e GOLANGCI_LINT_CACHE=/tmp/golangci-lint \
+            golangci/golangci-lint:v2.13.2 golangci-lint run
           go build ./cmd/main
           go test ./...
+          go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc6
+          cd /tmp/render/app && make check-api-docs
       - name: frontend builds
         run: |
           [ -d /tmp/render/app/services/frontend ] || exit 0

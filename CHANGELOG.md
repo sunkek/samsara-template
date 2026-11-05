@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- A fork's committed Swagger spec now matches it. `bootstrap.sh` runs
+  `go mod tidy` and regenerates `services/backend/docs` with the pinned swag;
+  the template's spec names its definitions after the template's module path
+  and lists every sample's endpoints, so every fork failed `check-api-docs`
+  until someone ran `make gen-api-docs`.
 - `make check-api-docs` failed to fail: when swag itself errored, it printed
   "swagger docs are up to date" and exited 0. Both CI files also installed
   swag `v2.0.0`, which does not exist (v2 has only release candidates); they
@@ -20,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   too), and mentions in the `note` doc comment, `CONTRIBUTING.md`,
   `docs/ARCHITECTURE.md` and ADR 0003. ADR 0006, which records the sample
   split, is pruned with them. The `note` metric goes without `postgresql`.
+- The `feature-matrix` job renders through `bootstrap.sh` and runs the
+  fork's CI checks on each combination: golangci-lint at the pinned version,
+  `check-api-docs`, a committed `go.sum`, and a search for references to the
+  pruned samples.
 - CI lints with golangci-lint v2.13.2 on both GitHub and GitLab. GitLab
   pinned v2.1, built with Go 1.24, which refuses to load the Go 1.26 module;
   GitHub ran whatever was latest. The backend passes the newer linter.
