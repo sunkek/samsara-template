@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- CI lints with golangci-lint v2.13.2 on both GitHub and GitLab. GitLab
+  pinned v2.1, built with Go 1.24, which refuses to load the Go 1.26 module;
+  GitHub ran whatever was latest. The backend passes the newer linter.
 - Forks no longer replace each other's containers. Every fork's compose
   project was named after its directory, `infra`, and compose identifies its
   containers by project and service name, not `container_name`, so `make up`

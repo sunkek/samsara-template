@@ -62,7 +62,10 @@ backend:
 
 backend-lint:
   stage: test
-  image: golangci/golangci-lint:v2.1
+  # Keep in step with the golangci-lint `version` in .github/workflows/ci.yml.
+  # The image must be built with a Go at least as new as the `go` directive in
+  # services/backend/go.mod, or golangci-lint refuses to load the module.
+  image: golangci/golangci-lint:v2.13.2
   script:
     - *template-guard
     - cd services/backend

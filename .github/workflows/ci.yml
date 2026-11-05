@@ -57,9 +57,14 @@ jobs:
           fi
       - name: go vet
         run: go vet ./...
+      # Pinned, and in step with the image tag of `backend-lint` in
+      # .gitlab-ci.yml: golangci-lint refuses a module whose `go` directive is
+      # newer than the Go it was built with, and an unpinned "latest" changes
+      # what the lint flags under a fork that did nothing.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
+          version: v2.13.2
           working-directory: services/backend
       - name: build
         run: go build ./cmd/main
