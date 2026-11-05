@@ -114,13 +114,16 @@ func NewObserver() Observer { return Observer{} }
 func (Observer) ComponentStarted(component string, _ int) {
 	componentUp.WithLabelValues(component).Set(1)
 }
+
 func (Observer) ComponentStopped(component string, _ error) {
 	componentUp.WithLabelValues(component).Set(0)
 }
+
 func (Observer) ComponentRestarting(component string, _ error, _ int, _ time.Duration) {
 	componentRestarts.WithLabelValues(component).Inc()
 	componentUp.WithLabelValues(component).Set(0)
 }
+
 func (Observer) HealthCheckCompleted(component string, duration time.Duration, _ error) {
 	healthCheckDuration.WithLabelValues(component).Observe(duration.Seconds())
 }

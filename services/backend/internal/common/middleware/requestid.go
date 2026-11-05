@@ -12,7 +12,7 @@ import (
 // HeaderRequestID is the inbound/outbound correlation header.
 const HeaderRequestID = "X-Request-ID"
 
-// RequestID assigns each request a correlation id (honouring an inbound
+// RequestID assigns each request a correlation id (honoring an inbound
 // X-Request-ID, otherwise generating one), echoes it in the response, and seeds
 // a request-scoped logger bound to request_id into the context. Downstream code
 // retrieves it with logging.From(ctx.Context()). Register this before the auth

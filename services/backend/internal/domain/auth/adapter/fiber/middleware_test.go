@@ -24,9 +24,11 @@ type stubService struct {
 func (s *stubService) Register(context.Context, model.RegisterInput) (model.User, error) {
 	return model.User{}, nil
 }
+
 func (s *stubService) Login(context.Context, model.LoginInput) (model.Tokens, error) {
 	return model.Tokens{}, nil
 }
+
 func (s *stubService) Refresh(context.Context, string) (model.Tokens, error) {
 	return model.Tokens{}, nil
 }
@@ -158,7 +160,7 @@ func TestClaimsReachTheHandlerOnlyWhenAuthenticated(t *testing.T) {
 
 func readBody(t *testing.T, resp *http.Response) string {
 	t.Helper()
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("read body: %v", err)

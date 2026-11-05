@@ -128,7 +128,7 @@ func TestReadsReachTheServiceAndSerialise(t *testing.T) {
 		}
 	})
 
-	t.Run("list serialises as an array", func(t *testing.T) {
+	t.Run("list serializes as an array", func(t *testing.T) {
 		svc := &stubService{list: []model.Note{{ID: "a"}, {ID: "b"}}}
 		resp := send(t, appWithRoutes(t, svc), http.MethodGet, "/notes", "")
 
@@ -155,7 +155,7 @@ func TestMalformedBodyIsARequestError(t *testing.T) {
 
 func decode(t *testing.T, resp *http.Response, dst any) {
 	t.Helper()
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if err := json.NewDecoder(resp.Body).Decode(dst); err != nil {
 		t.Fatalf("decode body: %v", err)
 	}

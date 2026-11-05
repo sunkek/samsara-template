@@ -54,7 +54,7 @@ func TestLogLevelDecodeRejectsUnknown(t *testing.T) {
 
 // requiredEnv sets the variables that have no default, so Read can complete.
 // Read calls log.Fatalf when one is missing, which kills the test process
-// rather than failing a case — so the "it is required" behaviour is asserted by
+// rather than failing a case — so the "it is required" behavior is asserted by
 // the service failing to boot, not here.
 //
 // Setting a variable a given feature build does not define is harmless:
