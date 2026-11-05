@@ -17,7 +17,7 @@ const (
 
 // HTTPStatus maps an error to an HTTP status code. It is the single source of
 // truth shared by the Fiber error handler and the metrics middleware. A nil
-// error maps to 200; an unrecognised error to 500.
+// error maps to 200; an unrecognized error to 500.
 func HTTPStatus(err error) int {
 	if err == nil {
 		return 200

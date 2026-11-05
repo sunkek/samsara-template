@@ -5,6 +5,7 @@ import (
 	fibercmp "github.com/sunkek/samsara-components/fiber"
 
 	"github.com/sunkek/samsara-template/backend/internal/domain/articlestats"
+	"github.com/sunkek/samsara-template/backend/internal/domain/articlestats/model"
 )
 
 // Adapter exposes the article read-model (projection) over HTTP.
@@ -30,9 +31,14 @@ func (a *Adapter) routes(r gf.Router) {
 //	@Tags		stats
 //	@Produce	json
 //	@Security	BearerAuth
-//	@Success	200	{object}	github_com_sunkek_samsara-template_backend_internal_domain_articlestats_model.Stats
+//	@Success	200	{object}	model.Stats
 //	@Router		/stats [get]
 func (a *Adapter) handleGet(ctx gf.Ctx) error {
+	// Declared with its type so this file imports model: swag resolves the
+	// model.Stats in the annotation above through the file's imports only, and
+	// a module-path-qualified name there would break when a fork renames the
+	// module.
+	var s model.Stats
 	s, err := a.svc.Get(ctx.Context())
 	if err != nil {
 		return err

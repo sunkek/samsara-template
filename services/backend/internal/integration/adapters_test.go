@@ -25,7 +25,7 @@ import (
 	authmodel "github.com/sunkek/samsara-template/backend/internal/domain/auth/model"
 	notepg "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/postgresql"
 	notemodel "github.com/sunkek/samsara-template/backend/internal/domain/note/model"
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	articlepg "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/postgresql"
 	articlemodel "github.com/sunkek/samsara-template/backend/internal/domain/article/model"
 	statspg "github.com/sunkek/samsara-template/backend/internal/domain/articlestats/adapter/postgresql"
@@ -190,7 +190,7 @@ func TestAuthAdapter(t *testing.T) {
 	}
 }
 
-// feat:if redis,rabbitmq
+// feat:if postgresql,redis,rabbitmq
 func TestArticleAdapter(t *testing.T) {
 	pg := component(t)
 	a := articlepg.New(pg)

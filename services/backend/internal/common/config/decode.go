@@ -9,7 +9,7 @@ import (
 type LogLevel slog.Level
 
 func (lld *LogLevel) Decode(value string) error {
-	var loggerLevels = map[string]slog.Level{
+	loggerLevels := map[string]slog.Level{
 		"error": slog.LevelError,
 		"warn":  slog.LevelWarn,
 		"info":  slog.LevelInfo,

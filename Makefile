@@ -249,7 +249,9 @@ secrets-remove-recipient:
 	scripts/secrets.sh remove-recipient "$(NAME)"
 
 # feat:if backend
-# Shared by gen-api-docs and check-api-docs so the two can never drift.
+# Shared by gen-api-docs and check-api-docs so the two can never drift. Both
+# expect swag v2.0.0-rc6, the version the CI files install: another version may
+# format the spec differently and check-api-docs then reports it stale.
 SWAG_FLAGS := --outputTypes json,yaml --parseInternal --parseDependency --parseDependencyLevel=1
 
 # The search dir is the module root, not cmd/main: the route annotations live on
@@ -264,7 +266,8 @@ gen-api-docs:
 
 # The spec is committed (Dockerfile.prod copies ./docs into the image), so it can
 # go stale the moment a handler annotation changes. CI runs this; it regenerates
-# into a temp dir and fails if the result differs from what is checked in.
+# into a temp dir and fails if the result differs from what is checked in, or if
+# swag cannot generate it at all.
 check-api-docs:
 	@cd ./services/backend && \
 	tmp="$$(mktemp -d)" && \
@@ -275,7 +278,7 @@ check-api-docs:
 	  echo "services/backend/docs is stale — run 'make gen-api-docs' and commit the result." >&2; \
 	  diff -u ./docs/swagger.json "$$tmp/swagger.json" | head -40 >&2; \
 	  exit 1; \
-	fi; \
+	fi && \
 	echo "swagger docs are up to date"
 
 # feat:end

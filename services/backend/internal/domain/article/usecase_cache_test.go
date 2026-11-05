@@ -17,10 +17,12 @@ type countingDB struct {
 }
 
 func (c *countingDB) Insert(_ context.Context, n model.Article) (model.Article, error) { return n, nil }
+
 func (c *countingDB) Get(context.Context, string) (model.Article, error) {
 	c.getCalls++
 	return c.article, nil
 }
+
 func (c *countingDB) List(context.Context) ([]model.Article, error) {
 	c.listCalls++
 	return c.list, nil

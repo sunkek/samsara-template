@@ -1,8 +1,10 @@
 // Package note is the vertical-slice sample: model, use cases, an inbound
 // Service port and outbound DB port, with a fiber adapter driving it and a
 // postgresql adapter behind it. It carries no optional infrastructure on
-// purpose — a fork copies this domain, renames it and starts writing. The
-// article domain shows what caching and event publication add on top.
+// purpose — a fork copies this domain, renames it and starts writing.
+// feat:if postgresql,redis,rabbitmq
+// The article domain shows what caching and event publication add on top.
+// feat:end
 package note
 
 // Domain holds the note use cases. It depends on the DB outbound port and

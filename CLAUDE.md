@@ -70,7 +70,8 @@ slice. Replace them with your own; they exist to be read and then deleted.
 - One use case per file: `usecase_<verb>.go`, a method on `*Domain`.
 - `make run-local` needs two host tools installed once:
   `go install github.com/air-verse/air@latest` and
-  `go install github.com/swaggo/swag/v2/cmd/swag@latest`.
+  `go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc6` (the version CI
+  pins; check-api-docs compares against its output).
 - Errors carry a `mishap` code from `internal/common/e`; the Fiber error handler
   in `cmd/main/main.go` maps codes to HTTP statuses. An unmapped code is a 500.
 - Log with `logging.From(ctx)`, never `slog.Default()`, inside request handling —

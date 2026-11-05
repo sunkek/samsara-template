@@ -28,11 +28,14 @@ var (
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method", "route"})
 
+	// feat:if postgresql
 	notesCreated = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "notes_created_total",
 		Help: "Total notes created.",
 	})
+	// feat:end
 
+	// feat:if postgresql,redis,rabbitmq
 	articlesCreated = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "articles_created_total",
 		Help: "Total articles created.",
@@ -52,6 +55,7 @@ var (
 		Name: "events_consumed_total",
 		Help: "Total domain events consumed.",
 	})
+	// feat:end
 
 	componentUp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "component_up",
@@ -73,7 +77,12 @@ var (
 func init() {
 	reg.MustRegister(
 		httpRequests, httpDuration,
-		notesCreated, articlesCreated, cacheOps, eventsPublished, eventsConsumed,
+		// feat:if postgresql
+		notesCreated,
+		// feat:end
+		// feat:if postgresql,redis,rabbitmq
+		articlesCreated, cacheOps, eventsPublished, eventsConsumed,
+		// feat:end
 		componentUp, componentRestarts, healthCheckDuration,
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
@@ -91,9 +100,12 @@ func ObserveHTTP(method, route string, status int, d time.Duration) {
 	httpDuration.WithLabelValues(method, route).Observe(d.Seconds())
 }
 
+// feat:if postgresql
 // NoteCreated counts a created note.
 func NoteCreated() { notesCreated.Inc() }
 
+// feat:end
+// feat:if postgresql,redis,rabbitmq
 // ArticleCreated counts a created article.
 func ArticleCreated() { articlesCreated.Inc() }
 
@@ -105,6 +117,8 @@ func CacheMiss() { cacheOps.WithLabelValues("miss").Inc() }
 func EventPublished() { eventsPublished.Inc() }
 func EventConsumed()  { eventsConsumed.Inc() }
 
+// feat:end
+
 // Observer implements samsara.MetricsObserver (structurally), bridging
 // supervisor telemetry into Prometheus.
 type Observer struct{}
@@ -114,13 +128,16 @@ func NewObserver() Observer { return Observer{} }
 func (Observer) ComponentStarted(component string, _ int) {
 	componentUp.WithLabelValues(component).Set(1)
 }
+
 func (Observer) ComponentStopped(component string, _ error) {
 	componentUp.WithLabelValues(component).Set(0)
 }
+
 func (Observer) ComponentRestarting(component string, _ error, _ int, _ time.Duration) {
 	componentRestarts.WithLabelValues(component).Inc()
 	componentUp.WithLabelValues(component).Set(0)
 }
+
 func (Observer) HealthCheckCompleted(component string, duration time.Duration, _ error) {
 	healthCheckDuration.WithLabelValues(component).Observe(duration.Seconds())
 }

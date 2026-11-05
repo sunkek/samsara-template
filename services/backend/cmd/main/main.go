@@ -30,7 +30,7 @@ import (
 	"github.com/sunkek/samsara-template/backend/internal/domain/note"
 	notefiber "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/fiber"
 	notepostgresql "github.com/sunkek/samsara-template/backend/internal/domain/note/adapter/postgresql"
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	"github.com/sunkek/samsara-template/backend/internal/domain/article"
 	articlefiber "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/fiber"
 	articlepostgresql "github.com/sunkek/samsara-template/backend/internal/domain/article/adapter/postgresql"
@@ -147,11 +147,11 @@ func main() {
 		samsara.WithTier(samsara.TierCritical),
 		samsara.WithRestartPolicy(samsara.MaxRetries(5, 5*time.Second)),
 	)
-	// feat:if redis
+	// feat:if postgresql,redis
 	// Declare the events exchange up front; the component (re-)declares it on
 	// every Start, so this is safe to call before the supervisor runs. The
 	// exchange serves the article domain, which exists only in a build that has
-	// both Redis and RabbitMQ.
+	// PostgreSQL, Redis and RabbitMQ.
 	if err := rabbitCmp.DeclareExchange(cfg.Events.Exchange, rabbitmq.ExchangeTopic, true); err != nil {
 		logger.Error("declare events exchange", "error", err)
 		os.Exit(1)
@@ -255,7 +255,7 @@ func main() {
 	noteDomain := note.New(noteDB)
 	_ = notefiber.New(fiberCmp, noteDomain)
 
-	// feat:if redis,rabbitmq
+	// feat:if postgresql,redis,rabbitmq
 	// article: the same slice plus optional infrastructure — cache-aside reads
 	// through Redis and article.created events through RabbitMQ.
 	articleDB := articlepostgresql.New(postgresCmp)

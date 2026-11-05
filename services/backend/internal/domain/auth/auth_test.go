@@ -29,12 +29,14 @@ func (s *stubDB) InsertUser(_ context.Context, u model.User) (model.User, error)
 	}
 	return u, nil
 }
+
 func (s *stubDB) GetUserByEmail(_ context.Context, email string) (model.User, error) {
 	if u, ok := s.byEmail[email]; ok {
 		return u, nil
 	}
 	return model.User{}, mishap.New("user not found", e.NotFound)
 }
+
 func (s *stubDB) GetUserByID(_ context.Context, id string) (model.User, error) {
 	if u, ok := s.byID[id]; ok {
 		return u, nil
@@ -52,9 +54,11 @@ func (s *stubRevoker) Revoke(_ context.Context, jti string, _ time.Duration) err
 	s.revoked[jti] = true
 	return nil
 }
+
 func (s *stubRevoker) IsRevoked(_ context.Context, jti string) (bool, error) {
 	return s.revoked[jti], nil
 }
+
 func (s *stubRevoker) Claim(ctx context.Context, jti string, ttl time.Duration) (bool, error) {
 	if s.revoked[jti] {
 		return false, nil
@@ -261,6 +265,7 @@ type lockingRevoker struct {
 func newLockingRevoker() *lockingRevoker {
 	return &lockingRevoker{revoked: map[string]bool{}}
 }
+
 func (r *lockingRevoker) Claim(_ context.Context, jti string, _ time.Duration) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -270,6 +275,7 @@ func (r *lockingRevoker) Claim(_ context.Context, jti string, _ time.Duration) (
 	r.revoked[jti] = true
 	return true, nil
 }
+
 func (r *lockingRevoker) Revoke(_ context.Context, jti string, _ time.Duration) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

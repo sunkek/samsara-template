@@ -329,6 +329,37 @@ if [ "$TARGET" = "$ROOT" ]; then
   rm -f "$TARGET/$SELF"
 fi
 
+# Regenerate the Swagger spec for the fork. The committed spec is the
+# template's: its definition names embed the module path
+# (github_com_sunkek_..._note_model.Note) and it lists every sample domain's
+# endpoints, so it is stale in every fork and CI's check-api-docs step would
+# fail on the first push. swag resolves the module's packages, so go mod tidy
+# runs first; the go.sum it writes is the one the fork commits. The swag version
+# is the one both CI files pin, so `make check-api-docs` agrees with the result;
+# the flags come from the Makefile's gen-api-docs target.
+SWAG_VERSION=v2.0.0-rc6
+API_DOCS_DONE=""
+if [ -d services/backend ]; then
+  if command -v go >/dev/null 2>&1 && command -v make >/dev/null 2>&1; then
+    echo "Regenerating the Swagger spec (go mod tidy, swag $SWAG_VERSION) ..."
+    swag_bin="$(mktemp -d)"
+    swag_log="$swag_bin/log"
+    if ( cd services/backend && go mod tidy ) >"$swag_log" 2>&1 \
+      && GOBIN="$swag_bin" go install "github.com/swaggo/swag/v2/cmd/swag@$SWAG_VERSION" >>"$swag_log" 2>&1 \
+      && PATH="$swag_bin:$PATH" make --no-print-directory gen-api-docs >>"$swag_log" 2>&1; then
+      API_DOCS_DONE=1
+    else
+      cat "$swag_log" >&2
+      echo "WARNING: could not regenerate services/backend/docs; it still describes the" >&2
+      echo "template. Run 'make gen-api-docs' in the fork before the first push." >&2
+    fi
+    rm -rf "$swag_bin"
+  else
+    echo "WARNING: go or make not found on PATH; services/backend/docs still describes the" >&2
+    echo "template. Run 'make gen-api-docs' in the fork before the first push." >&2
+  fi
+fi
+
 # Optional: confirm the renamed backend still compiles. Requires Go on PATH.
 # Runs in the work tree, so the go.sum it writes ships with the fork.
 if [ -n "$VERIFY" ] && [ -d services/backend ]; then
@@ -365,8 +396,9 @@ esac
 
 echo "Done. Next:"
 [ "$TARGET" = "$ROOT" ] || echo "  cd $TARGET"
-if [ -d services/backend ]; then
+if [ -d services/backend ] && [ -z "$API_DOCS_DONE" ]; then
   echo "  (cd services/backend && go mod tidy)    # commit go.sum: CI is gated on it"
+  echo "  make gen-api-docs                       # the spec still describes the template"
 fi
 if [ -d services/frontend ]; then
   echo "  (cd services/frontend && npm install)"
