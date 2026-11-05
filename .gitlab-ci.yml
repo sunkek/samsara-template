@@ -52,7 +52,8 @@ backend:
     # The spec is committed (Dockerfile.prod copies it into the image), so a
     # changed handler annotation must be regenerated and committed with it.
     - cd "$CI_PROJECT_DIR"
-    - go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0
+    # Same pinned swag as the GitHub job and the Makefile (v2 has only RCs).
+    - go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc6
     # GOPATH is redirected into the cache dir above, so its bin/ is not on PATH.
     - PATH="$GOPATH/bin:$PATH" make check-api-docs
     - cd services/backend

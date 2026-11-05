@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `make check-api-docs` failed to fail: when swag itself errored, it printed
+  "swagger docs are up to date" and exited 0. Both CI files also installed
+  swag `v2.0.0`, which does not exist (v2 has only release candidates); they
+  now pin `v2.0.0-rc6`, as do the README and the Makefile notes.
+- The `articlestats` handler annotation named its response type by the
+  template's module path, which broke Swagger generation in any renamed fork.
 - CI lints with golangci-lint v2.13.2 on both GitHub and GitLab. GitLab
   pinned v2.1, built with Go 1.24, which refuses to load the Go 1.26 module;
   GitHub ran whatever was latest. The backend passes the newer linter.

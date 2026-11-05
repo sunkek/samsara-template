@@ -94,7 +94,7 @@ in their own comment syntax, so an unrendered checkout still runs as-is.
 
 ```bash
 go install github.com/air-verse/air@latest
-go install github.com/swaggo/swag/v2/cmd/swag@latest
+go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc6
 ```
 
 <!-- feat:end -->
