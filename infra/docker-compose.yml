@@ -62,7 +62,11 @@ services:
       - postgresql_data:/var/lib/postgresql
       - ./postgresql/init/01-create-app-user-db.sh:/docker-entrypoint-initdb.d/01-create-app-user-db.sh:ro
     healthcheck:
-      test: ["CMD", "pg_isready", "-d", "$$POSTGRES_DB", "-U", "$$POSTGRES_USER"]
+      # Shell form, so the variables expand. In exec form they were passed
+      # literally, and Postgres logged `role "$POSTGRES_USER" does not exist`
+      # on every probe (the check still passed: pg_isready only asks whether
+      # the server accepts connections).
+      test: ["CMD-SHELL", "pg_isready -q -d \"$$POSTGRES_DB\" -U \"$$POSTGRES_USER\""]
       interval: 10s
       timeout: 30s
       retries: 5
